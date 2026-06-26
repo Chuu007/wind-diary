@@ -185,6 +185,32 @@ details.cfg summary::-webkit-details-marker{display:none}
   transition:.15s;cursor:pointer}
 .botnav a:hover,.botnav a.here{color:var(--gold)}
 .botnav a .icon{font-size:22px;line-height:1}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;display:flex;
+  align-items:center;justify-content:center;padding:16px}
+.modal-bg.hide{display:none}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:18px;
+  padding:24px 22px;max-width:480px;width:100%}
+.modal h2{color:var(--gold2);margin-bottom:4px;font-size:18px}
+.modal .msub{color:var(--muted);font-size:12.5px;margin-bottom:18px}
+.modal label{display:block;color:var(--gold);font-size:13px;font-weight:600;margin:12px 0 4px}
+.modal input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);
+  padding:9px 11px;border-radius:9px;font-family:inherit;font-size:14px}
+.modal .hint{color:var(--muted);font-size:11.5px;margin-top:3px}
+.modal .row{display:flex;gap:10px;margin-top:18px}
+.modal .status-dot{width:10px;height:10px;border-radius:50%;background:var(--muted);
+  display:inline-block;margin-right:6px;flex-shrink:0}
+.modal .status-dot.ok{background:var(--green)}
+.modal .status-dot.err{background:var(--red)}
+
+/* AI insights */
+.ai-card{background:linear-gradient(135deg,#1a2910,#111d28);border:1.5px solid #4a7c30;
+  border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.ai-card h3{color:#8ecf50;font-size:15px;margin-bottom:8px}
+.ai-card .ai-body{color:var(--txt);font-size:14px;line-height:1.75;white-space:pre-wrap}
+.ai-card .ai-date{color:var(--muted);font-size:11.5px;margin-top:10px}
+.ai-empty{color:var(--muted);font-size:13px;padding:12px 0;text-align:center}
 </style>
 </head>
 <body>
@@ -199,6 +225,7 @@ details.cfg summary::-webkit-details-marker{display:none}
     <button class="active" data-tab="d-write">✍️ เขียนวันนี้</button>
     <button data-tab="d-review">📚 ย้อนหลัง</button>
     <button data-tab="d-stats">📊 ภาพรวม</button>
+    <button data-tab="d-ai">🤖 AI Insights</button>
   </nav>
 
   <!-- WRITE -->
@@ -304,6 +331,26 @@ details.cfg summary::-webkit-details-marker{display:none}
       <button class="btn ghost" onclick="document.getElementById('d-imp').click()">⬆ นำเข้าข้อมูล</button>
     </div>
   </section>
+  <!-- AI INSIGHTS -->
+  <section class="tab" id="d-ai">
+    <div class="ai-card">
+      <h3>🤖 วิเคราะห์โดย Claude AI</h3>
+      <div id="ai-body" class="ai-body"><span class="ai-empty">กำลังโหลด...</span></div>
+      <div id="ai-date" class="ai-date"></div>
+    </div>
+    <div class="card">
+      <h2>ℹ️ วิธีการทำงาน</h2>
+      <div class="sub" style="line-height:1.9">
+        1. กด <b style="color:var(--gold)">บันทึก</b> ในหน้าเขียนวันนี้ → ข้อมูลจะถูกส่งขึ้น GitHub<br>
+        2. GitHub Actions รันทุกคืน 23:00 น. → ส่งให้ Claude วิเคราะห์<br>
+        3. ผลวิเคราะห์จะปรากฏที่นี่ในวันถัดไป
+      </div>
+    </div>
+    <div class="row-actions">
+      <button class="btn ghost" onclick="loadAIInsights()">🔄 โหลดใหม่</button>
+    </div>
+  </section>
+
   <div class="footnote">ข้อมูลเก็บในเบราว์เซอร์เครื่องคุณเอง — กดสำรองข้อมูลเป็นระยะ</div>
 </div><!-- /app-diary -->
 
@@ -458,7 +505,39 @@ details.cfg summary::-webkit-details-marker{display:none}
 <nav class="botnav">
   <a data-app="diary" onclick="switchApp('diary')"><span class="icon">📔</span><span>Diary</span></a>
   <a data-app="tgr" onclick="switchApp('tgr')"><span class="icon">📊</span><span>TGR</span></a>
+  <a onclick="openSettings()"><span class="icon">⚙️</span><span>Settings</span></a>
 </nav>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg hide" id="settings-modal">
+  <div class="modal">
+    <h2>⚙️ ตั้งค่า GitHub</h2>
+    <div class="msub">ข้อมูลเก็บในเครื่องคุณเท่านั้น — ไม่ได้ส่งออกไปที่ไหน</div>
+
+    <label>🔑 GitHub Personal Access Token</label>
+    <input type="password" id="cfg-token" placeholder="ghp_xxxxxxxxxxxx">
+    <div class="hint">สร้างที่ github.com/settings/tokens → scope: repo + workflow</div>
+
+    <label>📁 ชื่อ Repo สำหรับเก็บข้อมูล</label>
+    <input type="text" id="cfg-repo" placeholder="Chuu007/wind-diary-data">
+    <div class="hint">ควรเป็น private repo แยกต่างหาก — ข้อมูลไดอารี่จะถูกเก็บที่นี่</div>
+
+    <label>🤖 Claude API Key (สำหรับ AI วิเคราะห์)</label>
+    <input type="password" id="cfg-claude" placeholder="sk-ant-xxxxxxxxxxxx">
+    <div class="hint">ใส่ใน GitHub Secrets ชื่อ CLAUDE_API_KEY ด้วย (Actions จะใช้)</div>
+
+    <div style="margin-top:14px;display:flex;align-items:center;gap:8px;font-size:13px">
+      <span class="status-dot" id="cfg-dot"></span>
+      <span id="cfg-status" style="color:var(--muted)">ยังไม่ได้ทดสอบ</span>
+    </div>
+
+    <div class="row">
+      <button class="btn ghost" onclick="testGHToken()">ทดสอบ Token</button>
+      <button class="btn" onclick="saveSettings()">บันทึก</button>
+      <button class="btn ghost" onclick="closeSettings()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ===== SHARED ===== */
@@ -667,16 +746,19 @@ function renderStats(){
     mb.appendChild(row);});
 }
 
-const GITHUB_TOKEN="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";
-const GITHUB_REPO="Chuu007/wind-diary";
+function getGHSettings(){
+  return{token:localStorage.getItem("app_gh_token")||"",repo:localStorage.getItem("app_gh_data_repo")||""};
+}
 async function pushToGitHub(path,content){
+  const{token,repo}=getGHSettings();
+  if(!token||!repo)return false;
   const encoded=btoa(unescape(encodeURIComponent(content)));let sha=null;
-  try{const r=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`,
-    {headers:{"Authorization":`Bearer ${GITHUB_TOKEN}`,"User-Agent":"diary-app"}});
+  try{const r=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,
+    {headers:{"Authorization":`Bearer ${token}`,"User-Agent":"diary-app"}});
     if(r.ok){const d=await r.json();sha=d.sha;}}catch(e){}
   const body={message:`diary update ${todayStr()}`,content:encoded};if(sha)body.sha=sha;
-  const res=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`,{
-    method:"PUT",headers:{"Authorization":`Bearer ${GITHUB_TOKEN}`,"Content-Type":"application/json","User-Agent":"diary-app"},body:JSON.stringify(body)});
+  const res=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,{
+    method:"PUT",headers:{"Authorization":`Bearer ${token}`,"Content-Type":"application/json","User-Agent":"diary-app"},body:JSON.stringify(body)});
   return res.ok;
 }
 async function exportMarkdown(){
@@ -870,13 +952,13 @@ function renderProgress(){
     if(rec){const m=rec.m||{},e=rec.e||{};let c=0;for(let j=0;j<MORNING.length;j++)if(m[j])c++;for(let j=0;j<EVENING.length;j++)if(e[j])c++;lvl=c===0?0:c<=2?1:c<=5?2:3;}
     const cell=document.createElement("div");cell.className="d"+(lvl?" l"+lvl:"");cell.title=todayStr(d);heat.appendChild(cell);}}
 
-const GH_TOKEN="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";
-const GH_REPO="Chuu007/wind-diary";
 async function pushToGitHub(path,content){
+  const{token,repo}=getGHSettings();
+  if(!token||!repo)return false;
   const encoded=btoa(unescape(encodeURIComponent(content)));let sha=null;
-  try{const r=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`,{headers:{"Authorization":`Bearer ${GH_TOKEN}`,"User-Agent":"tgr-app"}});if(r.ok){const d=await r.json();sha=d.sha;}}catch(e){}
+  try{const r=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,{headers:{"Authorization":`Bearer ${token}`,"User-Agent":"tgr-app"}});if(r.ok){const d=await r.json();sha=d.sha;}}catch(e){}
   const body={message:`tgr update ${todayStr()}`,content:encoded};if(sha)body.sha=sha;
-  const res=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`,{method:"PUT",headers:{"Authorization":`Bearer ${GH_TOKEN}`,"Content-Type":"application/json","User-Agent":"tgr-app"},body:JSON.stringify(body)});return res.ok;}
+  const res=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,{method:"PUT",headers:{"Authorization":`Bearer ${token}`,"Content-Type":"application/json","User-Agent":"tgr-app"},body:JSON.stringify(body)});return res.ok;}
 async function exportMarkdown(){
   let md=`# TGR Dashboard — Export สำหรับ Claude\nวันที่ export: ${todayStr()}\n\n`;
   if(DB.goal)md+=`## 🎯 เป้าหมายหลัก\n${DB.goal}\n\n`;
@@ -903,6 +985,73 @@ function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new File
 renderReadCard();renderDaily();renderWeek();renderTrade();renderPlaybook();
 return{saveDaily,saveWeek,saveTrade,exportData,importData};
 })();
+
+/* ===== SETTINGS ===== */
+function openSettings(){
+  const s=getGHSettings();
+  document.getElementById("cfg-token").value=s.token;
+  document.getElementById("cfg-repo").value=s.repo;
+  document.getElementById("cfg-claude").value=localStorage.getItem("app_claude_key")||"";
+  document.getElementById("cfg-status").textContent="ยังไม่ได้ทดสอบ";
+  document.getElementById("cfg-dot").className="status-dot";
+  document.getElementById("settings-modal").classList.remove("hide");
+}
+function closeSettings(){document.getElementById("settings-modal").classList.add("hide");}
+function saveSettings(){
+  const t=document.getElementById("cfg-token").value.trim();
+  const r=document.getElementById("cfg-repo").value.trim();
+  const c=document.getElementById("cfg-claude").value.trim();
+  if(t)localStorage.setItem("app_gh_token",t); else localStorage.removeItem("app_gh_token");
+  if(r)localStorage.setItem("app_gh_data_repo",r); else localStorage.removeItem("app_gh_data_repo");
+  if(c)localStorage.setItem("app_claude_key",c); else localStorage.removeItem("app_claude_key");
+  closeSettings();
+  alert("บันทึกแล้ว ✓");
+}
+async function testGHToken(){
+  const t=document.getElementById("cfg-token").value.trim();
+  const r=document.getElementById("cfg-repo").value.trim();
+  const dot=document.getElementById("cfg-dot");
+  const status=document.getElementById("cfg-status");
+  if(!t||!r){status.textContent="กรุณาใส่ Token และ Repo ก่อน";dot.className="status-dot err";return;}
+  status.textContent="กำลังทดสอบ...";dot.className="status-dot";
+  try{
+    const res=await fetch(`https://api.github.com/repos/${r}`,{headers:{"Authorization":`Bearer ${t}`,"User-Agent":"wind-diary"}});
+    if(res.ok){dot.className="status-dot ok";status.textContent="เชื่อมต่อสำเร็จ ✓";}
+    else if(res.status===401){dot.className="status-dot err";status.textContent="Token ไม่ถูกต้อง (401)";}
+    else if(res.status===404){dot.className="status-dot err";status.textContent="ไม่พบ Repo — ตรวจชื่ออีกครั้ง (404)";}
+    else{dot.className="status-dot err";status.textContent="Error "+res.status;}
+  }catch(e){dot.className="status-dot err";status.textContent="ไม่สามารถเชื่อมต่อได้";}
+}
+
+/* ===== AI INSIGHTS ===== */
+async function loadAIInsights(){
+  const{token,repo}=getGHSettings();
+  const body=document.getElementById("ai-body");
+  const dateEl=document.getElementById("ai-date");
+  if(!token||!repo){
+    body.innerHTML='<span class="ai-empty">⚙️ ยังไม่ได้ตั้งค่า GitHub — กดปุ่ม Settings ด้านล่าง</span>';
+    return;
+  }
+  body.innerHTML='<span class="ai-empty">กำลังโหลด...</span>';
+  try{
+    const res=await fetch(`https://api.github.com/repos/${repo}/contents/analysis/insights.md`,
+      {headers:{"Authorization":`Bearer ${token}`,"User-Agent":"wind-diary"}});
+    if(res.status===404){
+      body.innerHTML='<span class="ai-empty">ยังไม่มีผลวิเคราะห์ — GitHub Actions จะรันทุกคืน 23:00 น.<br>หรือรัน workflow ด้วยตัวเองบน GitHub → Actions → Analyze Diary</span>';
+      dateEl.textContent="";return;
+    }
+    if(!res.ok){body.innerHTML='<span class="ai-empty">โหลดไม่สำเร็จ ('+res.status+')</span>';return;}
+    const data=await res.json();
+    const md=decodeURIComponent(escape(atob(data.content.replace(/\n/g,""))));
+    body.textContent=md;
+    dateEl.textContent="อัปเดตล่าสุด: "+(data.commit?.committer?.date||"").slice(0,10);
+  }catch(e){body.innerHTML='<span class="ai-empty">เกิดข้อผิดพลาด: '+e.message+'</span>';}
+}
+
+/* load AI when tab is clicked */
+document.querySelectorAll("#d-tabs button").forEach(btn=>{
+  btn.addEventListener("click",()=>{if(btn.dataset.tab==="d-ai")loadAIInsights();});
+});
 </script>
 </body>
 </html>

@@ -1,0 +1,81 @@
+name: Analyze Diary with Claude AI
+
+on:
+  schedule:
+    - cron: '0 16 * * *'   # 23:00 น. เวลาไทย (UTC+7 = UTC 16:00)
+  workflow_dispatch:        # รันด้วยตัวเองได้บน GitHub
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Read diary files
+        id: read
+        run: |
+          DIARY=""
+          TGR=""
+          if [ -f "diary/diary.md" ]; then
+            DIARY=$(cat diary/diary.md)
+          fi
+          if [ -f "tgr/tgr.md" ]; then
+            TGR=$(cat tgr/tgr.md)
+          fi
+          echo "diary_exists=$([ -f diary/diary.md ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "tgr_exists=$([ -f tgr/tgr.md ] && echo true || echo false)" >> $GITHUB_OUTPUT
+
+      - name: Analyze with Claude API
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: |
+          DIARY_CONTENT=""
+          TGR_CONTENT=""
+          if [ -f "diary/diary.md" ]; then
+            DIARY_CONTENT=$(cat diary/diary.md | tail -c 15000)
+          fi
+          if [ -f "tgr/tgr.md" ]; then
+            TGR_CONTENT=$(cat tgr/tgr.md | tail -c 8000)
+          fi
+
+          PROMPT="คุณเป็นโค้ชส่วนตัวที่ฉลาดและเข้าอกเข้าใจ วิเคราะห์ไดอารี่และข้อมูล TGR ด้านล่างนี้แล้วให้ข้อมูลเชิงลึกที่เป็นประโยชน์จริงๆ ตอบเป็นภาษาไทย\n\n## ไดอารี่\n${DIARY_CONTENT}\n\n## TGR Dashboard\n${TGR_CONTENT}\n\nกรุณาวิเคราะห์ใน 4 หัวข้อนี้:\n\n### 🔍 รูปแบบที่เห็น\nอะไรที่เกิดซ้ำๆ ทั้งดีและไม่ดี?\n\n### 💪 จุดแข็งที่ชัดเจน\nสิ่งที่กำลังทำได้ดีและควรทำต่อ\n\n### ⚠️ สิ่งที่ควรระวัง\nอารมณ์ นิสัย หรือรูปแบบที่อาจดึงถอยหลัง\n\n### 🎯 คำแนะนำสำหรับสัปดาห์หน้า\n1-3 อย่างที่เป็นรูปธรรมและทำได้จริง"
+
+          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $CLAUDE_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d "{
+              \"model\": \"claude-haiku-4-5-20251001\",
+              \"max_tokens\": 1024,
+              \"messages\": [{\"role\": \"user\", \"content\": $(echo "$PROMPT" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')}]
+            }")
+
+          ANALYSIS=$(echo "$RESPONSE" | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          if 'content' in data and len(data['content']) > 0:
+              print(data['content'][0]['text'])
+          else:
+              print('ไม่สามารถวิเคราะห์ได้: ' + str(data.get('error', data)))
+          ")
+
+          TODAY=$(date '+%Y-%m-%d')
+          mkdir -p analysis
+          cat > analysis/insights.md << MDEOF
+          # 🤖 AI Insights — วิเคราะห์โดย Claude
+          อัปเดต: ${TODAY}
+
+          ${ANALYSIS}
+          MDEOF
+
+      - name: Commit analysis
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add analysis/insights.md
+          git diff --cached --quiet || git commit -m "AI analysis update $(date '+%Y-%m-%d')"
+          git push
