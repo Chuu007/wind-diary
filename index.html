@@ -553,6 +553,11 @@ function esc(s){return(s||"").replace(/</g,"&lt;")}
 function escq(s){return(s||"").replace(/"/g,"&quot;")}
 function uid(){return"x"+Math.random().toString(36).slice(2,8)}
 
+/* ===== GITHUB SETTINGS (global) ===== */
+function getGHSettings(){
+  return{token:localStorage.getItem("app_gh_token")||"",repo:localStorage.getItem("app_gh_data_repo")||""};
+}
+
 /* ===== APP SWITCHER ===== */
 function switchApp(name){
   document.getElementById("app-diary").style.display=name==="diary"?"block":"none";
@@ -746,9 +751,6 @@ function renderStats(){
     mb.appendChild(row);});
 }
 
-function getGHSettings(){
-  return{token:localStorage.getItem("app_gh_token")||"",repo:localStorage.getItem("app_gh_data_repo")||""};
-}
 async function pushToGitHub(path,content){
   const{token,repo}=getGHSettings();
   if(!token||!repo)return false;
