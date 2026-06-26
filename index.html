@@ -638,8 +638,8 @@ function renderHabits(){
   DB.config.habits.forEach((h,i)=>{const row=document.createElement("div");row.className="habit-cfg";
     row.innerHTML=`<input class="nm" type="text" value="${escq(h.name)}" placeholder="ชื่อนิสัย">
       <input class="cue" type="text" value="${escq(h.cue)}" placeholder="จุดผูก"><button class="del">✕</button>`;
-    row.querySelector(".nm").oninput=ev=>{h.name=ev.target.value;saveDB();renderHabits()};
-    row.querySelector(".cue").oninput=ev=>{h.cue=ev.target.value;saveDB();renderHabits()};
+    row.querySelector(".nm").oninput=ev=>{h.name=ev.target.value;saveDB()};
+    row.querySelector(".cue").oninput=ev=>{h.cue=ev.target.value;saveDB()};
     row.querySelector(".del").onclick=()=>{DB.config.habits.splice(i,1);saveDB();renderHabits()};
     cfg.appendChild(row);});
 }
