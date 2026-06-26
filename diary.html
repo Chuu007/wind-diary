@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ไดอารี่ · เขียนเย็น + สร้างนิสัย</title>
+<style>
+  :root{
+    --bg:#11161c;--panel:#1b232c;--panel2:#232d38;--line:#303c48;
+    --txt:#eef2f6;--muted:#94a2b1;--gold:#e0b341;--gold2:#f3cf72;
+    --green:#5bc491;--red:#e3776c;--blue:#62a6e2;--radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Sukhumvit Set","Sarabun","Segoe UI",Tahoma,sans-serif;
+    background:#11161c;color:var(--txt);line-height:1.65;padding:22px;min-height:100vh;font-size:15px}
+  .wrap{max-width:780px;margin:0 auto}
+  header.top{text-align:center;margin-bottom:16px}
+  header.top h1{font-size:23px;color:var(--gold2);font-weight:700}
+  header.top p{color:var(--muted);font-size:13px;margin-top:3px}
+  header.top a{color:var(--gold);text-decoration:none}
+
+  nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  nav.tabs button{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--line);
+    color:var(--muted);padding:10px 8px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600}
+  nav.tabs button:hover{color:var(--txt)}
+  nav.tabs button.active{background:var(--gold);color:#1a1305;border-color:var(--gold)}
+
+  .tab{display:none}.tab.active{display:block}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px}
+  .card h2{font-size:17px;color:var(--gold2);margin-bottom:3px}
+  .card h3{font-size:14px;color:var(--gold);margin:0 0 6px}
+  .card .sub{color:var(--muted);font-size:12.5px;margin-bottom:10px}
+
+  .datebar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .datebar input[type=date]{background:var(--bg);border:1px solid var(--line);color:var(--txt);padding:7px 10px;border-radius:8px;font-family:inherit}
+  .pill{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:4px 11px;font-size:12.5px;color:var(--muted)}
+  .saved{color:var(--green);font-size:12.5px;opacity:0;transition:.3s}.saved.show{opacity:1}
+
+  textarea,input[type=text]{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);
+    padding:9px 11px;border-radius:9px;font-family:inherit;font-size:14px;resize:vertical}
+  textarea{min-height:96px}textarea.sm{min-height:54px}
+
+  .prompt{background:#231b08;border:1px solid var(--gold);border-radius:11px;padding:11px 14px;margin-bottom:11px}
+  .prompt .lbl{color:var(--gold);font-size:11.5px;font-weight:700;margin-bottom:2px}
+  .prompt .q{color:var(--gold2);font-size:15.5px;font-weight:600}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:4px 0}
+  .chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);padding:5px 12px;border-radius:18px;cursor:pointer;font-size:13px;user-select:none}
+  .chip.on.pos{background:rgba(91,196,145,.18);border-color:var(--green);color:#92e2b9}
+  .chip.on.neg{background:rgba(227,119,108,.18);border-color:var(--red);color:#f1a79f}
+  .lbl-pos{color:var(--green);font-size:12.5px;font-weight:600;margin-top:4px}
+  .lbl-neg{color:var(--red);font-size:12.5px;font-weight:600;margin-top:10px}
+
+  .grat-row,.plan-item{display:flex;align-items:center;gap:8px;margin:6px 0}
+  .grat-row .n{color:var(--gold);font-weight:700;width:16px}
+  .plan-item input[type=text]{flex:1}
+  .plan-item button,.habit-cfg button.del{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;width:32px;height:32px;cursor:pointer;flex-shrink:0}
+  .plan-item button:hover{border-color:var(--red);color:var(--red)}
+
+  .checkrow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+  .checkrow:last-child{border-bottom:none}
+  .checkrow input[type=checkbox]{width:21px;height:21px;margin-top:1px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
+  .checkrow .body{flex:1}
+  .checkrow .body .main{font-weight:600}
+  .checkrow .body .cue{color:var(--muted);font-size:12.5px}
+  .checkrow .body .cue b{color:var(--blue);font-weight:600}
+  .checkrow .strk{font-size:12px;color:var(--gold);white-space:nowrap}
+  .checkrow.done .body .main{color:var(--muted);text-decoration:line-through}
+
+  .ident{display:flex;gap:9px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+  .ident:last-child{border-bottom:none}
+  .ident input{width:20px;height:20px;accent-color:var(--gold);cursor:pointer;flex-shrink:0}
+  .ident .t{flex:1;font-size:14px}
+  .ident.on .t{color:var(--gold2)}
+
+  .btn{background:var(--gold);color:#1a1305;border:none;padding:9px 17px;border-radius:9px;font-family:inherit;font-weight:700;cursor:pointer;font-size:14px}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+  .btn.sm{padding:6px 12px;font-size:13px}
+  .btn:hover{filter:brightness(1.08)}
+  .row-actions{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+
+  details.cfg{margin-top:10px}
+  details.cfg summary{cursor:pointer;color:var(--muted);font-size:13px;list-style:none}
+  details.cfg summary::-webkit-details-marker{display:none}
+  .habit-cfg{display:flex;gap:7px;align-items:center;margin:6px 0}
+  .habit-cfg input.nm{flex:2}.habit-cfg input.cue{flex:1}
+
+  .entry{background:var(--panel2);border:1px solid var(--line);border-radius:11px;margin-bottom:9px;overflow:hidden}
+  .entry summary{cursor:pointer;padding:12px 15px;list-style:none;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .entry summary::-webkit-details-marker{display:none}
+  .entry summary .date{font-weight:700;color:var(--gold2)}
+  .entry summary .snip{color:var(--muted);font-size:13px;flex:1;min-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .entry summary .mini{font-size:12px}
+  .entry .ebody{padding:0 15px 15px;font-size:14px}
+  .entry .ebody .blk{margin-top:9px}
+  .entry .ebody .blk .h{color:var(--gold);font-size:11.5px;font-weight:700;margin-bottom:2px}
+  .entry .ebody .blk .t{white-space:pre-wrap}
+
+  .statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:4px 0}
+  @media(max-width:680px){.statgrid{grid-template-columns:1fr 1fr}}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:13px;text-align:center}
+  .stat .big{font-size:26px;font-weight:700;color:var(--gold2)}
+  .stat .lbl{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .hbar{display:flex;align-items:center;gap:9px;margin:5px 0}
+  .hbar .hn{width:120px;font-size:12px;color:var(--muted);text-align:right;flex-shrink:0}
+  .hbar .htrack{flex:1;background:var(--bg);border-radius:6px;height:14px;overflow:hidden}
+  .hbar .hfill{height:100%;border-radius:6px}
+  .hbar .hv{width:34px;font-size:12px;font-weight:700}
+  .heat{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
+  .heat .d{width:13px;height:13px;border-radius:3px;background:var(--bg);border:1px solid var(--line)}
+  .heat .d.on{background:var(--gold);border-color:var(--gold)}
+  .footnote{color:var(--muted);font-size:12px;text-align:center;margin-top:18px;line-height:1.7}
+  .botnav{position:fixed;bottom:0;left:0;right:0;background:#11161c;border-top:1px solid var(--line);
+    display:flex;z-index:999;padding-bottom:env(safe-area-inset-bottom)}
+  .botnav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:10px 4px;text-decoration:none;color:var(--muted);font-size:11px;gap:3px;transition:.15s}
+  .botnav a:hover,.botnav a.here{color:var(--gold)}
+  .botnav a .icon{font-size:22px;line-height:1}
+  body{padding-bottom:80px}
+  .empty{color:var(--muted);font-size:13px;padding:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>📔 SUPPAYA DIARY</h1>
+    <p>ทบทวนวัน + สร้างนิสัยใหม่ทีละนิด · <a href="TGR-Dashboard.html">↗ แดชบอร์ดหลัก</a></p>
+  </header>
+
+  <nav class="tabs">
+    <button class="active" data-tab="write">✍️ เขียนวันนี้</button>
+    <button data-tab="review">📚 ย้อนหลัง</button>
+    <button data-tab="stats">📊 ภาพรวม</button>
+  </nav>
+
+  <!-- ===== WRITE ===== -->
+  <section class="tab active" id="write">
+    <div class="datebar">
+      <input type="date" id="d">
+      <span class="pill" id="streak">🔥 เขียนต่อเนื่อง 0 วัน</span>
+      <span class="saved" id="saved">✓ บันทึกแล้ว</span>
+    </div>
+
+    <div class="card" id="followCard">
+      <h2>✅ ผลของแผนเมื่อวาน</h2>
+      <div class="sub">ติ๊กข้อที่ทำได้ — ปิดวงจรว่าแผนสำเร็จไหม</div>
+      <div id="follow"></div>
+    </div>
+
+    <div class="card">
+      <h2>🎯 นิสัยวันนี้</h2>
+      <div class="sub">เช็กทุกวัน — “หลังจาก[จุดผูก] ฉันจะ[นิสัย]”</div>
+      <div id="habits"></div>
+      <details class="cfg">
+        <summary>⚙️ ตั้งค่านิสัย</summary>
+        <div id="habitCfg" style="margin-top:8px"></div>
+        <div class="row-actions"><button class="btn sm ghost" onclick="addHabit()">+ เพิ่มนิสัย</button></div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>🗳️ วันนี้ฉันโหวตให้ตัวตนไหน</h2>
+      <div class="sub">ทุกการกระทำคือการโหวตว่าอยากเป็นคนแบบไหน — ติ๊กตัวตนที่วันนี้ได้ลงมือสนับสนุน</div>
+      <div id="idents"></div>
+      <details class="cfg">
+        <summary>⚙️ แก้ไขตัวตน</summary>
+        <div id="identCfg" style="margin-top:8px"></div>
+        <div class="row-actions"><button class="btn sm ghost" onclick="addIdent()">+ เพิ่มตัวตน</button></div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>✍️ บันทึกวันนี้</h2>
+      <div class="prompt"><div class="lbl">คำถามนำของวัน</div><div class="q" id="promptQ"></div></div>
+      <textarea id="text" placeholder="วันนี้เป็นยังไงบ้าง… เรื่องที่เกิด ความรู้สึก ความคิด สิ่งที่ทำ"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>📖 อ่านแล้วจะลงมือ</h2>
+      <div class="sub">วันนี้อ่าน/ได้แนวคิดอะไร → จะเอาไปลงมือทำอะไร (กันอ่านแล้วไม่ได้เริ่ม)</div>
+      <textarea id="readAction" class="sm" placeholder="อ่าน: …  →  จะลงมือ: …"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>🎭 วันนี้รู้สึกอย่างไร</h2>
+      <div class="lbl-pos">อารมณ์เชิงบวก</div><div class="chips" id="posChips"></div>
+      <div class="lbl-neg">อารมณ์เชิงลบ</div><div class="chips" id="negChips"></div>
+    </div>
+
+    <div class="card">
+      <h2>🙏 ขอบคุณ 3 อย่าง</h2>
+      <div id="grat"></div>
+    </div>
+
+    <div class="card">
+      <h2>🌅 แผนพรุ่งนี้</h2>
+      <div class="sub">ตั้งสิ่งที่จะทำให้สำเร็จพรุ่งนี้ → พรุ่งนี้มาติ๊กผลด้านบน</div>
+      <div id="plan"></div>
+      <div class="row-actions"><button class="btn sm ghost" onclick="addPlan()">+ เพิ่มแผน</button></div>
+    </div>
+
+    <div class="row-actions"><button class="btn" onclick="saveNow()">บันทึก</button><span class="saved" id="saved2">✓ บันทึกแล้ว</span><span id="githubStatus" style="font-size:13px;opacity:0;transition:.5s;margin-left:6px"></span></div>
+  </section>
+
+  <!-- ===== REVIEW ===== -->
+  <section class="tab" id="review">
+    <div class="card">
+      <h2>📚 บันทึกย้อนหลัง</h2>
+      <input type="text" id="search" placeholder="🔍 ค้นหาคำในบันทึก…" oninput="renderList()" style="margin:0 0 12px">
+      <div id="list"></div>
+    </div>
+  </section>
+
+  <!-- ===== STATS ===== -->
+  <section class="tab" id="stats">
+    <div class="card">
+      <h2>📊 ภาพรวม</h2>
+      <div class="statgrid">
+        <div class="stat"><div class="big" id="stStreak">0</div><div class="lbl">เขียนต่อเนื่อง</div></div>
+        <div class="stat"><div class="big" id="stTotal">0</div><div class="lbl">บันทึกทั้งหมด</div></div>
+        <div class="stat"><div class="big" id="stPlan">–</div><div class="lbl">แผนสำเร็จ</div></div>
+        <div class="stat"><div class="big" id="stRatio">–</div><div class="lbl">บวก:ลบ</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🎯 นิสัย — 30 วันล่าสุด</h3>
+      <div class="sub">% ที่ทำได้ + ต่อเนื่องล่าสุด</div>
+      <div id="habitStats"></div>
+    </div>
+    <div class="card">
+      <h3>🗳️ การโหวตตัวตน (นับครั้ง)</h3>
+      <div id="identStats"></div>
+    </div>
+    <div class="card">
+      <h3>🎭 อารมณ์ที่พบบ่อย</h3>
+      <div id="moodBars"></div>
+    </div>
+    <div class="row-actions">
+      <button class="btn ghost" onclick="exportData()">⬇ สำรองข้อมูล</button>
+      <input type="file" id="imp" accept="application/json" style="display:none" onchange="importData(event)">
+      <button class="btn ghost" onclick="document.getElementById('imp').click()">⬆ นำเข้าข้อมูล</button>
+    </div>
+  </section>
+
+  <div class="footnote">ข้อมูลเก็บในเบราว์เซอร์เครื่องคุณเอง — กดสำรองข้อมูลเป็นระยะ</div>
+
+<nav class="botnav">
+  <a href="diary.html" class="here">
+    <span class="icon">📔</span>
+    <span>Diary</span>
+  </a>
+  <a href="TGR-Dashboard.html">
+    <span class="icon">📊</span>
+    <span>TGR</span>
+  </a>
+</nav>
+</div>
+
+<script>
+const POS=["ปรารถนา","ศรัทธา","รัก","ใจจดจ่อ","กระตือรือร้น","ตื่นเต้น","หวัง"];
+const NEG=["กลัว","อิจฉา","เกลียด","แค้น","โลภ","งมงาย","โกรธ"];
+const PROMPTS=[
+ "วันนี้มีอะไรที่ทำได้ดี / ภูมิใจบ้าง?",
+ "วันนี้รู้สึกยังไง และอะไรทำให้รู้สึกแบบนั้น?",
+ "วันนี้ได้เรียนรู้อะไรที่มีประโยชน์?",
+ "ถ้าย้อนวันนี้ได้ จะทำอะไรต่างไป 1 อย่าง?",
+ "วันนี้ฉันลงมือทำอะไรที่เข้าใกล้สิ่งที่ตั้งใจ?",
+ "อะไรที่ฉันผัดผ่อนวันนี้ และเพราะอะไร?",
+ "วันนี้ฉันได้โหวตให้ตัวตนแบบไหนบ้าง?",
+ "งานลานข้าว/ธุรกิจวันนี้มีอะไรน่าจดไว้?",
+ "วันนี้ฉันป้อนอารมณ์บวกหรือลบให้ตัวเองมากกว่ากัน?",
+ "พรุ่งนี้สิ่งสำคัญที่สุด 1 อย่างคืออะไร?"
+];
+const DEF_IDENT=["คนมีวินัย ทำตามแผน","คนที่อ่านแล้วลงมือทำจริง","นักลงทุนที่มีระบบของตัวเอง"];
+const DEF_HABITS=[{id:"h1",name:"อ่าน + จด 1 อย่างที่จะลงมือ",cue:"ก่อนนอน"},{id:"h2",name:"ออกกำลังกาย / ดูแลสุขภาพ",cue:"ตอนตื่นเช้า"}];
+
+const KEY="tgr_diary_v2";
+let DB=load();
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY))||{};d.entries=d.entries||{};d.config=d.config||{};
+  d.config.identities=d.config.identities||DEF_IDENT.slice();d.config.habits=d.config.habits||DEF_HABITS.slice();return d}
+  catch(e){return{entries:{},config:{identities:DEF_IDENT.slice(),habits:DEF_HABITS.slice()}}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}}
+function flash(){["saved","saved2"].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1200)}})}
+function todayStr(d=new Date()){return d.toISOString().slice(0,10)}
+function dayOfYear(ds){const d=new Date(ds+"T00:00:00");return Math.floor((d-new Date(d.getFullYear(),0,0))/86400000)}
+function prevDay(ds){const d=new Date(ds+"T00:00:00");d.setDate(d.getDate()-1);return todayStr(d)}
+function uid(){return"x"+Math.random().toString(36).slice(2,8)}
+function esc(s){return(s||"").replace(/</g,'&lt;')}
+function escq(s){return(s||"").replace(/"/g,'&quot;')}
+
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');document.getElementById(b.dataset.tab).classList.add('active');
+  if(b.dataset.tab==='review')renderList();if(b.dataset.tab==='stats')renderStats();
+});
+
+const dEl=document.getElementById('d');dEl.value=todayStr();dEl.onchange=renderWrite;
+function cur(){const k=dEl.value;DB.entries[k]=DB.entries[k]||{text:"",emotions:{pos:[],neg:[]},grat:["","",""],plan:[],habitsDone:{},identityVotes:{},readAction:""};
+  const e=DB.entries[k];e.habitsDone=e.habitsDone||{};e.identityVotes=e.identityVotes||{};return e}
+
+function renderWrite(){
+  const e=cur();
+  document.getElementById('promptQ').textContent=PROMPTS[dayOfYear(dEl.value)%PROMPTS.length];
+  document.getElementById('text').value=e.text||"";
+  document.getElementById('readAction').value=e.readAction||"";
+  buildChips('posChips',POS,'pos',e);buildChips('negChips',NEG,'neg',e);
+  // gratitude
+  const g=document.getElementById('grat');g.innerHTML="";
+  for(let i=0;i<3;i++){const row=document.createElement('div');row.className="grat-row";
+    row.innerHTML=`<span class="n">${i+1}</span><input type="text" value="${escq(e.grat[i])}" placeholder="สิ่งที่ขอบคุณ…">`;
+    row.querySelector('input').oninput=ev=>{e.grat[i]=ev.target.value;save();flash()};g.appendChild(row);}
+  renderHabits();renderIdents();renderPlan();renderFollow();updateStreak();
+}
+function buildChips(id,arr,bucket,e){const c=document.getElementById(id);c.innerHTML="";
+  arr.forEach((name,i)=>{const on=e.emotions[bucket].includes(i);
+    const chip=document.createElement('span');chip.className="chip "+bucket+(on?" on":"");chip.textContent=name;
+    chip.onclick=()=>{const idx=e.emotions[bucket].indexOf(i);if(idx>=0)e.emotions[bucket].splice(idx,1);else e.emotions[bucket].push(i);
+      chip.classList.toggle('on');save();flash()};c.appendChild(chip);});}
+document.getElementById('text').oninput=ev=>{cur().text=ev.target.value;save();flash()};
+document.getElementById('readAction').oninput=ev=>{cur().readAction=ev.target.value;save();flash()};
+
+/* habits */
+function habitStreak(hid){let s=0,d=new Date();for(;;){const k=todayStr(d);const e=DB.entries[k];
+  if(e&&e.habitsDone&&e.habitsDone[hid]){s++;d.setDate(d.getDate()-1);}
+  else{if(k===todayStr())d.setDate(d.getDate()-1);else break;}}return s;}
+function renderHabits(){
+  const e=cur();const c=document.getElementById('habits');c.innerHTML="";
+  if(!DB.config.habits.length){c.innerHTML='<div class="empty">ยังไม่มีนิสัย — กด ⚙️ ตั้งค่านิสัย</div>';}
+  DB.config.habits.forEach(h=>{
+    const done=!!e.habitsDone[h.id];const strk=habitStreak(h.id);
+    const row=document.createElement('div');row.className="checkrow"+(done?" done":"");
+    row.innerHTML=`<input type="checkbox" ${done?"checked":""}>
+      <div class="body"><div class="main">${esc(h.name)}</div>
+        <div class="cue">หลังจาก <b>${esc(h.cue||"…")}</b> ฉันจะทำสิ่งนี้</div></div>
+      <div class="strk">🔥 ${strk}</div>`;
+    row.querySelector('input').onchange=ev=>{e.habitsDone[h.id]=ev.target.checked;row.classList.toggle('done',ev.target.checked);
+      row.querySelector('.strk').textContent="🔥 "+habitStreak(h.id);save();flash()};
+    c.appendChild(row);
+  });
+  // config
+  const cfg=document.getElementById('habitCfg');cfg.innerHTML="";
+  DB.config.habits.forEach((h,i)=>{const row=document.createElement('div');row.className="habit-cfg";
+    row.innerHTML=`<input class="nm" type="text" value="${escq(h.name)}" placeholder="ชื่อนิสัย">
+      <input class="cue" type="text" value="${escq(h.cue)}" placeholder="จุดผูก เช่น ก่อนนอน"><button class="del">✕</button>`;
+    row.querySelector('.nm').oninput=ev=>{h.name=ev.target.value;save();renderHabits()};
+    row.querySelector('.cue').oninput=ev=>{h.cue=ev.target.value;save();renderHabits()};
+    row.querySelector('.del').onclick=()=>{DB.config.habits.splice(i,1);save();renderHabits()};
+    cfg.appendChild(row);});
+}
+function addHabit(){DB.config.habits.push({id:uid(),name:"",cue:""});save();renderHabits();}
+
+/* identities */
+function renderIdents(){
+  const e=cur();const c=document.getElementById('idents');c.innerHTML="";
+  DB.config.identities.forEach((name,i)=>{const on=!!e.identityVotes[i];
+    const row=document.createElement('div');row.className="ident"+(on?" on":"");
+    row.innerHTML=`<input type="checkbox" ${on?"checked":""}><div class="t">ฉันคือ “${esc(name)}”</div>`;
+    row.querySelector('input').onchange=ev=>{e.identityVotes[i]=ev.target.checked;row.classList.toggle('on',ev.target.checked);save();flash()};
+    c.appendChild(row);});
+  const cfg=document.getElementById('identCfg');cfg.innerHTML="";
+  DB.config.identities.forEach((name,i)=>{const row=document.createElement('div');row.className="habit-cfg";
+    row.innerHTML=`<input class="nm" type="text" value="${escq(name)}" placeholder="ตัวตนที่อยากเป็น"><button class="del">✕</button>`;
+    row.querySelector('.nm').oninput=ev=>{DB.config.identities[i]=ev.target.value;save()};
+    row.querySelector('.del').onclick=()=>{DB.config.identities.splice(i,1);save();renderIdents()};
+    cfg.appendChild(row);});
+}
+function addIdent(){DB.config.identities.push("");save();renderIdents();}
+
+/* plan + follow-up */
+function renderPlan(){const e=cur();const p=document.getElementById('plan');p.innerHTML="";
+  if(!e.plan.length)p.innerHTML='<div class="empty">ยังไม่มีแผน — กด “+ เพิ่มแผน”</div>';
+  e.plan.forEach((item,i)=>{const row=document.createElement('div');row.className="plan-item";
+    row.innerHTML=`<input type="text" value="${escq(item.text)}" placeholder="สิ่งที่จะทำให้สำเร็จพรุ่งนี้…"><button>✕</button>`;
+    row.querySelector('input').oninput=ev=>{item.text=ev.target.value;save();flash()};
+    row.querySelector('button').onclick=()=>{e.plan.splice(i,1);save();renderPlan();flash()};p.appendChild(row);});}
+function addPlan(){cur().plan.push({id:uid(),text:"",done:false,note:""});save();renderPlan();}
+function renderFollow(){const k=prevDay(dEl.value);const ye=DB.entries[k];
+  const card=document.getElementById('followCard');const f=document.getElementById('follow');
+  const plans=(ye&&ye.plan)?ye.plan.filter(x=>x.text&&x.text.trim()):[];
+  if(!plans.length){card.style.display="none";return}card.style.display="block";f.innerHTML="";
+  plans.forEach(item=>{const row=document.createElement('div');row.className="checkrow"+(item.done?" done":"");
+    row.innerHTML=`<input type="checkbox" ${item.done?"checked":""}>
+      <div class="body"><div class="main">${esc(item.text)}</div>
+      <textarea class="sm" style="margin-top:6px" placeholder="ผลเป็นยังไง / ติดอะไร (ไม่บังคับ)">${esc(item.note)}</textarea></div>`;
+    row.querySelector('input').onchange=ev=>{item.done=ev.target.checked;row.classList.toggle('done',ev.target.checked);save();flash()};
+    row.querySelector('textarea').oninput=ev=>{item.note=ev.target.value;save();flash()};f.appendChild(row);});}
+async function saveNow(){save();flash();await exportMarkdown();}
+
+/* streak */
+function hasContent(e){if(!e)return false;return (e.text&&e.text.trim())||e.emotions.pos.length||e.emotions.neg.length||
+  (e.grat&&e.grat.some(x=>x&&x.trim()))||(e.plan&&e.plan.some(x=>x.text&&x.text.trim()))||
+  (e.readAction&&e.readAction.trim())||(e.habitsDone&&Object.values(e.habitsDone).some(Boolean))||
+  (e.identityVotes&&Object.values(e.identityVotes).some(Boolean));}
+function currentStreak(){let s=0,d=new Date();for(;;){const k=todayStr(d);
+  if(hasContent(DB.entries[k])){s++;d.setDate(d.getDate()-1);}else{if(k===todayStr())d.setDate(d.getDate()-1);else break;}}return s;}
+function updateStreak(){document.getElementById('streak').textContent=`🔥 เขียนต่อเนื่อง ${currentStreak()} วัน`}
+
+/* review */
+function renderList(){
+  const q=(document.getElementById('search').value||"").toLowerCase().trim();
+  const list=document.getElementById('list');list.innerHTML="";
+  const keys=Object.keys(DB.entries).filter(k=>hasContent(DB.entries[k])).sort().reverse();let shown=0;
+  keys.forEach(k=>{const e=DB.entries[k];
+    const hay=((e.text||"")+" "+(e.readAction||"")+" "+(e.grat||[]).join(" ")+" "+(e.plan||[]).map(p=>p.text).join(" ")).toLowerCase();
+    if(q&&!hay.includes(q))return;shown++;
+    const pos=e.emotions.pos.map(i=>POS[i]),neg=e.emotions.neg.map(i=>NEG[i]);
+    const planTxt=(e.plan||[]).filter(p=>p.text&&p.text.trim());const doneN=planTxt.filter(p=>p.done).length;
+    const habN=Object.values(e.habitsDone||{}).filter(Boolean).length;
+    const det=document.createElement('details');det.className="entry";
+    const snip=(e.text||e.readAction||"").replace(/\n/g," ").slice(0,55)||"(ไม่มีข้อความ)";
+    det.innerHTML=`<summary><span class="date">${k}</span><span class="snip">${esc(snip)}</span>
+      <span class="mini">${habN?'🎯'+habN:''} ${pos.length?'🟢'+pos.length:''} ${neg.length?'🔴'+neg.length:''} ${planTxt.length?'📋'+doneN+'/'+planTxt.length:''}</span></summary>
+      <div class="ebody">
+        ${e.text?`<div class="blk"><div class="h">บันทึก</div><div class="t">${esc(e.text)}</div></div>`:''}
+        ${e.readAction&&e.readAction.trim()?`<div class="blk"><div class="h">อ่านแล้วจะลงมือ</div><div class="t">${esc(e.readAction)}</div></div>`:''}
+        ${(pos.length||neg.length)?`<div class="blk"><div class="h">อารมณ์</div><div class="t">${[...pos.map(x=>'🟢'+x),...neg.map(x=>'🔴'+x)].join("  ")}</div></div>`:''}
+        ${(e.grat||[]).some(x=>x&&x.trim())?`<div class="blk"><div class="h">ขอบคุณ</div><div class="t">${esc(e.grat.filter(x=>x&&x.trim()).map((x,i)=>(i+1)+". "+x).join("\\n"))}</div></div>`:''}
+        ${planTxt.length?`<div class="blk"><div class="h">แผนพรุ่งนี้ (${doneN}/${planTxt.length})</div><div class="t">${esc(planTxt.map(p=>(p.done?'✅ ':'⬜ ')+p.text+(p.note?' — '+p.note:'')).join("\\n"))}</div></div>`:''}
+      </div>`;
+    list.appendChild(det);});
+  if(!shown)list.innerHTML='<div class="empty">'+(q?'ไม่พบบันทึกที่ตรงกับคำค้น':'ยังไม่มีบันทึก เริ่มเขียนวันนี้ได้เลย')+'</div>';
+}
+
+/* stats */
+function renderStats(){
+  document.getElementById('stStreak').textContent=currentStreak();
+  const keys=Object.keys(DB.entries).filter(k=>hasContent(DB.entries[k]));
+  document.getElementById('stTotal').textContent=keys.length;
+  let pd=0,pt=0,pc=0,nc=0;const posC=Array(POS.length).fill(0),negC=Array(NEG.length).fill(0);
+  keys.forEach(k=>{const e=DB.entries[k];(e.plan||[]).forEach(p=>{if(p.text&&p.text.trim()){pt++;if(p.done)pd++;}});
+    e.emotions.pos.forEach(i=>{posC[i]++;pc++});e.emotions.neg.forEach(i=>{negC[i]++;nc++});});
+  document.getElementById('stPlan').textContent=pt?Math.round(pd/pt*100)+"%":"–";
+  document.getElementById('stRatio').textContent=(pc+nc)?pc+":"+nc:"–";
+
+  // habits last 30 days
+  const hc=document.getElementById('habitStats');hc.innerHTML="";
+  if(!DB.config.habits.length)hc.innerHTML='<div class="empty">ยังไม่มีนิสัย</div>';
+  DB.config.habits.forEach(h=>{let done=0;for(let i=0;i<30;i++){const dd=new Date();dd.setDate(dd.getDate()-i);
+      const e=DB.entries[todayStr(dd)];if(e&&e.habitsDone&&e.habitsDone[h.id])done++;}
+    const pct=Math.round(done/30*100);const strk=habitStreak(h.id);
+    const row=document.createElement('div');row.className="hbar";
+    row.innerHTML=`<div class="hn">${esc(h.name)}</div><div class="htrack"><div class="hfill" style="width:${pct}%;background:linear-gradient(90deg,#3b9468,#5bc491)"></div></div><div class="hv" style="color:#92e2b9">${pct}% 🔥${strk}</div>`;
+    hc.appendChild(row);
+    // heat strip
+    const heat=document.createElement('div');heat.className="heat";
+    for(let i=29;i>=0;i--){const dd=new Date();dd.setDate(dd.getDate()-i);const e=DB.entries[todayStr(dd)];
+      const on=e&&e.habitsDone&&e.habitsDone[h.id];const c=document.createElement('div');c.className="d"+(on?" on":"");c.title=todayStr(dd);heat.appendChild(c);}
+    hc.appendChild(heat);});
+
+  // identity counts
+  const ic=document.getElementById('identStats');ic.innerHTML="";
+  const idc=DB.config.identities.map(()=>0);
+  keys.forEach(k=>{const v=DB.entries[k].identityVotes||{};Object.keys(v).forEach(i=>{if(v[i]&&idc[i]!==undefined)idc[i]++;});});
+  const idmax=Math.max(1,...idc);
+  if(!DB.config.identities.length)ic.innerHTML='<div class="empty">ยังไม่มีตัวตน</div>';
+  DB.config.identities.forEach((n,i)=>{const row=document.createElement('div');row.className="hbar";
+    row.innerHTML=`<div class="hn">${esc(n)}</div><div class="htrack"><div class="hfill" style="width:${idc[i]/idmax*100}%;background:linear-gradient(90deg,#b8932f,#f3cf72)"></div></div><div class="hv" style="color:#f3cf72">${idc[i]}</div>`;
+    ic.appendChild(row);});
+
+  // moods
+  const mb=document.getElementById('moodBars');mb.innerHTML="";
+  const all=[...POS.map((n,i)=>({n,c:posC[i],col:"linear-gradient(90deg,#3b9468,#5bc491)",tc:"#92e2b9"})),
+             ...NEG.map((n,i)=>({n,c:negC[i],col:"linear-gradient(90deg,#b04f47,#e3776c)",tc:"#f1a79f"}))].filter(x=>x.c>0).sort((a,b)=>b.c-a.c);
+  const mmax=Math.max(1,...all.map(x=>x.c));
+  if(!all.length){mb.innerHTML='<div class="empty">ยังไม่มีข้อมูลอารมณ์</div>'}
+  all.forEach(x=>{const row=document.createElement('div');row.className="hbar";
+    row.innerHTML=`<div class="hn">${x.n}</div><div class="htrack"><div class="hfill" style="width:${x.c/mmax*100}%;background:${x.col}"></div></div><div class="hv" style="color:${x.tc}">${x.c}</div>`;
+    mb.appendChild(row);});
+}
+
+/* GitHub config */
+const GITHUB_TOKEN = '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';
+const GITHUB_REPO  = 'Chuu007/wind-diary';
+
+async function pushToGitHub(path, content) {
+  const encoded = btoa(unescape(encodeURIComponent(content)));
+  let sha = null;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`,
+      {headers:{'Authorization':`Bearer ${GITHUB_TOKEN}`,'User-Agent':'diary-app'}});
+    if(r.ok){const d=await r.json();sha=d.sha;}
+  } catch(e){}
+  const body={message:`diary update ${todayStr()}`,content:encoded};
+  if(sha) body.sha=sha;
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`,{
+    method:'PUT',
+    headers:{'Authorization':`Bearer ${GITHUB_TOKEN}`,'Content-Type':'application/json','User-Agent':'diary-app'},
+    body:JSON.stringify(body)
+  });
+  return res.ok;
+}
+
+/* export markdown for Claude */
+async function exportMarkdown(){
+  const days=Object.keys(DB.entries).sort().reverse();
+  if(!days.length){alert("ยังไม่มีข้อมูล");return;}
+  const habits=DB.config.habits||DEF_HABITS;
+  const idents=DB.config.identities||DEF_IDENT;
+  let md=`# ไดอารี่ Wind — Export สำหรับ Claude\nวันที่ export: ${todayStr()} | บันทึกทั้งหมด: ${days.length} วัน\n\n`;
+  md+=`## วิธีใช้\nไฟล์นี้คือบันทึกไดอารี่รายวัน อัปโหลดหรือ paste ให้ Claude แล้วถามได้เลย เช่น:\n- "วิเคราะห์แนวโน้มอารมณ์ของฉัน 30 วันที่ผ่านมา"\n- "นิสัยไหนทำได้ดีสุด ไหนต้องปรับ"\n- "สรุปสิ่งที่ฉันขอบคุณบ่อยที่สุด"\n\n---\n\n`;
+  days.forEach(date=>{
+    const e=DB.entries[date];if(!e)return;
+    const d=new Date(date+"T00:00:00");
+    const dayNames=["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัส","ศุกร์","เสาร์"];
+    md+=`## 📅 ${date} (${dayNames[d.getDay()]})\n\n`;
+    if(e.text) md+=`**✍️ บันทึกวันนี้**\n${e.text}\n\n`;
+    if(e.readAction) md+=`**📖 อ่านแล้วจะลงมือ**\n${e.readAction}\n\n`;
+    const posNames=(e.emotions?.pos||[]).map(i=>POS[i]).filter(Boolean);
+    const negNames=(e.emotions?.neg||[]).map(i=>NEG[i]).filter(Boolean);
+    if(posNames.length||negNames.length){
+      md+=`**🎭 อารมณ์**\n`;
+      if(posNames.length) md+=`- บวก: ${posNames.join(", ")}\n`;
+      if(negNames.length) md+=`- ลบ: ${negNames.join(", ")}\n`;
+      md+="\n";
+    }
+    const grat=(e.grat||[]).filter(Boolean);
+    if(grat.length){md+=`**🙏 ขอบคุณ 3 อย่าง**\n`;grat.forEach((g,i)=>md+=`${i+1}. ${g}\n`);md+="\n";}
+    if(habits.length){
+      md+=`**✅ นิสัย**\n`;
+      habits.forEach(h=>{const done=!!(e.habitsDone||{})[h.id];md+=`- [${done?"x":" "}] ${h.name}\n`;});
+      md+="\n";
+    }
+    const votedIdents=Object.keys(e.identityVotes||{}).filter(k=>e.identityVotes[k]).map(k=>idents[+k]).filter(Boolean);
+    if(votedIdents.length){md+=`**🗳️ โหวตตัวตน**\n`;votedIdents.forEach(v=>md+=`- ✓ ${v}\n`);md+="\n";}
+    const plans=(e.plan||[]).filter(p=>p.text);
+    if(plans.length){md+=`**🌅 แผน**\n`;plans.forEach(p=>md+=`- [${p.done?"x":" "}] ${p.text}\n`);md+="\n";}
+    md+="---\n\n";
+  });
+  const ghEl=document.getElementById('githubStatus');
+  if(ghEl){ghEl.textContent='☁️ กำลังส่ง...';ghEl.style.opacity=1;ghEl.style.color='var(--muted)';}
+  const ok=await pushToGitHub('diary/diary.md',md);
+  if(ghEl){ghEl.textContent=ok?'☁️ GitHub ✓':'⚠️ GitHub ✗ (ตรวจ token)';ghEl.style.color=ok?'var(--green)':'var(--red)';setTimeout(()=>{ghEl.style.opacity=0;},3000);}
+}
+
+/* export/import */
+function exportData(){const blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download="diary-backup-"+todayStr()+".json";a.click();}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const o=JSON.parse(r.result);o.entries=o.entries||{};o.config=o.config||{identities:DEF_IDENT.slice(),habits:DEF_HABITS.slice()};DB=o;save();renderWrite();alert("นำเข้าสำเร็จ")}catch(e){alert("ไฟล์ไม่ถูกต้อง")}};r.readAsText(f);}
+
+renderWrite();
+</script>
+</body>
+</html>

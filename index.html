@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wind — Diary & TGR</title>
+<style>
+:root{
+  --bg:#0f1419;--panel:#1a2129;--panel2:#222b35;--line:#2e3a46;
+  --txt:#e8edf2;--muted:#93a1b0;--gold:#e0b341;--gold2:#f5cf6b;
+  --green:#54c08a;--red:#e0746a;--blue:#5ea2e0;--radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Sukhumvit Set","Sarabun","Segoe UI",Tahoma,sans-serif;
+  background:var(--bg);color:var(--txt);line-height:1.65;padding:22px;
+  min-height:100vh;font-size:15px;padding-bottom:80px}
+.wrap{max-width:860px;margin:0 auto}
+header.top{text-align:center;margin-bottom:16px}
+header.top h1{font-size:24px;color:var(--gold2);font-weight:700}
+header.top p{color:var(--muted);font-size:13px;margin-top:3px}
+
+/* tabs */
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+nav.tabs button{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--line);
+  color:var(--muted);padding:10px 8px;border-radius:10px;cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:600;transition:.15s}
+nav.tabs button:hover{color:var(--txt);border-color:var(--gold)}
+nav.tabs button.active{background:var(--gold);color:#1a1305;border-color:var(--gold)}
+.tab{display:none;animation:fade .25s}.tab.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* cards */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:14px}
+.card h2{font-size:17px;color:var(--gold2);margin-bottom:3px}
+.card h3{font-size:14px;color:var(--gold);margin:12px 0 6px}
+.card .sub{color:var(--muted);font-size:12.5px;margin-bottom:10px}
+
+/* forms */
+.datebar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.datebar input[type=date]{background:var(--bg);border:1px solid var(--line);color:var(--txt);
+  padding:7px 10px;border-radius:8px;font-family:inherit}
+.pill{background:var(--panel2);border:1px solid var(--line);border-radius:20px;
+  padding:4px 11px;font-size:12.5px;color:var(--muted)}
+.saved{color:var(--green);font-size:12.5px;opacity:0;transition:.3s}.saved.show{opacity:1}
+textarea,input[type=text],input[type=number]{width:100%;background:var(--bg);
+  border:1px solid var(--line);color:var(--txt);padding:9px 11px;border-radius:9px;
+  font-family:inherit;font-size:14px;resize:vertical}
+textarea{min-height:90px}textarea.sm{min-height:52px}
+
+/* diary-specific */
+.prompt{background:#231b08;border:1px solid var(--gold);border-radius:11px;
+  padding:11px 14px;margin-bottom:11px}
+.prompt .lbl{color:var(--gold);font-size:11.5px;font-weight:700;margin-bottom:2px}
+.prompt .q{color:var(--gold2);font-size:15.5px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:4px 0}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);
+  padding:5px 12px;border-radius:18px;cursor:pointer;font-size:13px;user-select:none}
+.chip.on.pos{background:rgba(84,192,138,.18);border-color:var(--green);color:#92e2b9}
+.chip.on.neg{background:rgba(224,116,106,.18);border-color:var(--red);color:#f1a79f}
+.lbl-pos{color:var(--green);font-size:12.5px;font-weight:600;margin-top:4px}
+.lbl-neg{color:var(--red);font-size:12.5px;font-weight:600;margin-top:10px}
+.grat-row,.plan-item{display:flex;align-items:center;gap:8px;margin:6px 0}
+.grat-row .n{color:var(--gold);font-weight:700;width:16px}
+.plan-item input[type=text]{flex:1}
+.plan-item button,.habit-cfg button.del{background:transparent;border:1px solid var(--line);
+  color:var(--muted);border-radius:8px;width:32px;height:32px;cursor:pointer;flex-shrink:0}
+.plan-item button:hover,.habit-cfg button.del:hover{border-color:var(--red);color:var(--red)}
+.checkrow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.checkrow:last-child{border-bottom:none}
+.checkrow input[type=checkbox]{width:21px;height:21px;margin-top:1px;
+  accent-color:var(--green);cursor:pointer;flex-shrink:0}
+.checkrow .body{flex:1}.checkrow .body .main{font-weight:600}
+.checkrow .body .cue{color:var(--muted);font-size:12.5px}
+.checkrow .body .cue b{color:var(--blue);font-weight:600}
+.checkrow .strk{font-size:12px;color:var(--gold);white-space:nowrap}
+.checkrow.done .body .main{color:var(--muted);text-decoration:line-through}
+.ident{display:flex;gap:9px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.ident:last-child{border-bottom:none}
+.ident input{width:20px;height:20px;accent-color:var(--gold);cursor:pointer;flex-shrink:0}
+.ident .t{flex:1;font-size:14px}.ident.on .t{color:var(--gold2)}
+details.cfg{margin-top:10px}
+details.cfg summary{cursor:pointer;color:var(--muted);font-size:13px;list-style:none}
+details.cfg summary::-webkit-details-marker{display:none}
+.habit-cfg{display:flex;gap:7px;align-items:center;margin:6px 0}
+.habit-cfg input.nm{flex:2}.habit-cfg input.cue{flex:1}
+.entry{background:var(--panel2);border:1px solid var(--line);border-radius:11px;
+  margin-bottom:9px;overflow:hidden}
+.entry summary{cursor:pointer;padding:12px 15px;list-style:none;display:flex;
+  align-items:center;gap:9px;flex-wrap:wrap}
+.entry summary::-webkit-details-marker{display:none}
+.entry summary .date{font-weight:700;color:var(--gold2)}
+.entry summary .snip{color:var(--muted);font-size:13px;flex:1;min-width:100px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry summary .mini{font-size:12px}
+.entry .ebody{padding:0 15px 15px;font-size:14px}
+.entry .ebody .blk{margin-top:9px}
+.entry .ebody .blk .h{color:var(--gold);font-size:11.5px;font-weight:700;margin-bottom:2px}
+.entry .ebody .blk .t{white-space:pre-wrap}
+
+/* TGR-specific */
+.goalbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;margin:0 0 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.goalbox label{color:var(--gold);font-weight:600;white-space:nowrap}
+.goalbox input{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--line);
+  color:var(--txt);padding:10px 12px;border-radius:10px;font-family:inherit;font-size:15px}
+.goalbox .hint{color:var(--muted);font-size:12px;width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:680px){.two{grid-template-columns:1fr}}
+.score-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.score-row:last-child{border-bottom:none}
+.score-row .name{flex:1;font-size:14px}
+.score-row .num{color:var(--gold);font-weight:700;width:26px;text-align:center}
+.score-row input[type=range]{width:130px;accent-color:var(--gold)}
+.principle{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;
+  overflow:hidden;background:var(--panel2)}
+.principle summary{cursor:pointer;padding:13px 16px;font-weight:600;font-size:15px;
+  list-style:none;display:flex;align-items:center;gap:10px;color:var(--txt)}
+.principle summary::-webkit-details-marker{display:none}
+.principle summary .no{background:var(--gold);color:#1a1305;width:26px;height:26px;
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;flex-shrink:0}
+.principle summary .en{color:var(--muted);font-weight:400;font-size:13px}
+.principle[open] summary{border-bottom:1px solid var(--line);background:#27313c}
+.principle .body{padding:14px 18px 18px}
+.principle .body .qlabel{color:var(--blue);font-weight:600;font-size:13px;margin:10px 0 4px}
+.principle .body .slabel{color:var(--green);font-weight:600;font-size:13px;margin:14px 0 4px}
+.principle .body ul{margin-left:18px;font-size:14px}
+.principle .body ul li{margin:3px 0}
+.principle .body .q{font-style:italic;color:var(--txt);font-size:14px;margin:10px 0 4px 4px;
+  border-left:2px solid var(--blue);padding-left:10px}
+.principle .body textarea.ans{min-height:48px;margin-bottom:8px;font-size:13px}
+.check{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.check:last-child{border-bottom:none}
+.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--gold);cursor:pointer;flex-shrink:0}
+.check label{cursor:pointer;flex:1}
+.check .tag{font-size:11px;color:var(--gold);background:rgba(224,179,65,.12);
+  padding:1px 7px;border-radius:6px;margin-left:6px;white-space:nowrap}
+.check.done label{color:var(--muted);text-decoration:line-through}
+.readcard{background:linear-gradient(135deg,#2a2008,#1d2730);border:1.5px solid var(--gold);
+  border-radius:var(--radius);padding:20px 22px;margin-bottom:16px;text-align:center}
+.readcard .readlabel{color:var(--gold);font-weight:700;font-size:14px;margin-bottom:12px}
+.readcard .readlabel span{display:block;color:var(--muted);font-weight:400;font-size:12px;margin-top:2px}
+.readcard .readtext{font-size:20px;line-height:1.5;color:var(--gold2);font-weight:700;
+  padding:12px 8px;border-top:1px solid rgba(224,179,65,.25);border-bottom:1px solid rgba(224,179,65,.25)}
+.readcard.empty .readtext{font-size:15px;color:var(--muted);font-weight:400}
+.readcard .readsteps{color:var(--muted);font-size:12px;margin-top:12px;line-height:1.6}
+.bars{display:flex;align-items:flex-end;gap:8px;height:140px;padding:8px 4px;border-bottom:1px solid var(--line)}
+.bars .bar{flex:1;background:linear-gradient(180deg,var(--gold2),var(--gold));border-radius:6px 6px 0 0;
+  min-height:4px;position:relative;transition:.3s}
+.bars .bar span{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:11px;color:var(--gold)}
+.bars .bar small{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted)}
+.barwrap{margin:20px 0 24px}
+.heat{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
+.heat .d{width:13px;height:13px;border-radius:3px;background:var(--bg);border:1px solid var(--line)}
+.heat .d.on,.heat .d.l3{background:var(--gold);border-color:var(--gold)}
+.heat .d.l1{background:rgba(224,179,65,.3)}.heat .d.l2{background:rgba(224,179,65,.65)}
+
+/* shared */
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:4px 0 10px}
+@media(max-width:640px){.statgrid{grid-template-columns:1fr 1fr}}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:13px;text-align:center}
+.stat .big{font-size:26px;font-weight:700;color:var(--gold2)}
+.stat .lbl{font-size:11.5px;color:var(--muted);margin-top:2px}
+.hbar{display:flex;align-items:center;gap:9px;margin:5px 0}
+.hbar .hn{width:130px;font-size:12px;color:var(--muted);text-align:right;flex-shrink:0}
+.hbar .htrack{flex:1;background:var(--bg);border-radius:6px;height:14px;overflow:hidden}
+.hbar .hfill{height:100%;border-radius:6px}
+.hbar .hv{width:34px;font-size:12px;font-weight:700}
+.btn{background:var(--gold);color:#1a1305;border:none;padding:9px 17px;border-radius:9px;
+  font-family:inherit;font-weight:700;cursor:pointer;font-size:14px}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn:hover{filter:brightness(1.08)}
+.row-actions{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.empty{color:var(--muted);font-size:13px;padding:6px 0}
+.footnote{color:var(--muted);font-size:12px;text-align:center;margin-top:16px;line-height:1.7}
+
+/* bottom nav */
+.botnav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);
+  border-top:1px solid var(--line);display:flex;z-index:999;
+  padding-bottom:env(safe-area-inset-bottom)}
+.botnav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:10px 4px;text-decoration:none;color:var(--muted);font-size:11px;gap:3px;
+  transition:.15s;cursor:pointer}
+.botnav a:hover,.botnav a.here{color:var(--gold)}
+.botnav a .icon{font-size:22px;line-height:1}
+</style>
+</head>
+<body>
+
+<!-- ==================== DIARY APP ==================== -->
+<div id="app-diary" class="wrap">
+  <header class="top">
+    <h1>📔 SUPPAYA DIARY</h1>
+    <p>ทบทวนวัน + สร้างนิสัยใหม่ทีละนิด</p>
+  </header>
+  <nav class="tabs" id="d-tabs">
+    <button class="active" data-tab="d-write">✍️ เขียนวันนี้</button>
+    <button data-tab="d-review">📚 ย้อนหลัง</button>
+    <button data-tab="d-stats">📊 ภาพรวม</button>
+  </nav>
+
+  <!-- WRITE -->
+  <section class="tab active" id="d-write">
+    <div class="datebar">
+      <input type="date" id="d-date">
+      <span class="pill" id="d-streak">🔥 เขียนต่อเนื่อง 0 วัน</span>
+      <span class="saved" id="d-saved">✓ บันทึกแล้ว</span>
+    </div>
+    <div class="card" id="d-followCard">
+      <h2>✅ ผลของแผนเมื่อวาน</h2>
+      <div class="sub">ติ๊กข้อที่ทำได้ — ปิดวงจรว่าแผนสำเร็จไหม</div>
+      <div id="d-follow"></div>
+    </div>
+    <div class="card">
+      <h2>🎯 นิสัยวันนี้</h2>
+      <div class="sub">เช็กทุกวัน — "หลังจาก[จุดผูก] ฉันจะ[นิสัย]"</div>
+      <div id="d-habits"></div>
+      <details class="cfg">
+        <summary>⚙️ ตั้งค่านิสัย</summary>
+        <div id="d-habitCfg" style="margin-top:8px"></div>
+        <div class="row-actions"><button class="btn sm ghost" onclick="D.addHabit()">+ เพิ่มนิสัย</button></div>
+      </details>
+    </div>
+    <div class="card">
+      <h2>🗳️ วันนี้ฉันโหวตให้ตัวตนไหน</h2>
+      <div class="sub">ทุกการกระทำคือการโหวตว่าอยากเป็นคนแบบไหน</div>
+      <div id="d-idents"></div>
+      <details class="cfg">
+        <summary>⚙️ แก้ไขตัวตน</summary>
+        <div id="d-identCfg" style="margin-top:8px"></div>
+        <div class="row-actions"><button class="btn sm ghost" onclick="D.addIdent()">+ เพิ่มตัวตน</button></div>
+      </details>
+    </div>
+    <div class="card">
+      <h2>✍️ บันทึกวันนี้</h2>
+      <div class="prompt"><div class="lbl">คำถามนำของวัน</div><div class="q" id="d-promptQ"></div></div>
+      <textarea id="d-text" placeholder="วันนี้เป็นยังไงบ้าง…"></textarea>
+    </div>
+    <div class="card">
+      <h2>📖 อ่านแล้วจะลงมือ</h2>
+      <div class="sub">วันนี้ได้แนวคิดอะไร → จะเอาไปลงมือทำอะไร</div>
+      <textarea id="d-readAction" class="sm" placeholder="อ่าน: …  →  จะลงมือ: …"></textarea>
+    </div>
+    <div class="card">
+      <h2>🎭 วันนี้รู้สึกอย่างไร</h2>
+      <div class="lbl-pos">อารมณ์เชิงบวก</div><div class="chips" id="d-posChips"></div>
+      <div class="lbl-neg">อารมณ์เชิงลบ</div><div class="chips" id="d-negChips"></div>
+    </div>
+    <div class="card">
+      <h2>🙏 ขอบคุณ 3 อย่าง</h2>
+      <div id="d-grat"></div>
+    </div>
+    <div class="card">
+      <h2>🌅 แผนพรุ่งนี้</h2>
+      <div class="sub">ตั้งสิ่งที่จะทำให้สำเร็จพรุ่งนี้</div>
+      <div id="d-plan"></div>
+      <div class="row-actions"><button class="btn sm ghost" onclick="D.addPlan()">+ เพิ่มแผน</button></div>
+    </div>
+    <div class="row-actions">
+      <button class="btn" onclick="D.saveNow()">บันทึก</button>
+      <span class="saved" id="d-saved2">✓ บันทึกแล้ว</span>
+      <span id="d-ghStatus" style="font-size:13px;opacity:0;transition:.5s;margin-left:6px"></span>
+    </div>
+  </section>
+
+  <!-- REVIEW -->
+  <section class="tab" id="d-review">
+    <div class="card">
+      <h2>📚 บันทึกย้อนหลัง</h2>
+      <input type="text" id="d-search" placeholder="🔍 ค้นหาคำในบันทึก…" oninput="D.renderList()" style="margin:0 0 12px">
+      <div id="d-list"></div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="tab" id="d-stats">
+    <div class="card">
+      <h2>📊 ภาพรวม</h2>
+      <div class="statgrid">
+        <div class="stat"><div class="big" id="d-stStreak">0</div><div class="lbl">เขียนต่อเนื่อง</div></div>
+        <div class="stat"><div class="big" id="d-stTotal">0</div><div class="lbl">บันทึกทั้งหมด</div></div>
+        <div class="stat"><div class="big" id="d-stPlan">–</div><div class="lbl">แผนสำเร็จ</div></div>
+        <div class="stat"><div class="big" id="d-stRatio">–</div><div class="lbl">บวก:ลบ</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🎯 นิสัย — 30 วันล่าสุด</h3>
+      <div class="sub">% ที่ทำได้ + ต่อเนื่องล่าสุด</div>
+      <div id="d-habitStats"></div>
+    </div>
+    <div class="card">
+      <h3>🗳️ การโหวตตัวตน (นับครั้ง)</h3>
+      <div id="d-identStats"></div>
+    </div>
+    <div class="card">
+      <h3>🎭 อารมณ์ที่พบบ่อย</h3>
+      <div id="d-moodBars"></div>
+    </div>
+    <div class="row-actions">
+      <button class="btn ghost" onclick="D.exportData()">⬇ สำรองข้อมูล</button>
+      <input type="file" id="d-imp" accept="application/json" style="display:none" onchange="D.importData(event)">
+      <button class="btn ghost" onclick="document.getElementById('d-imp').click()">⬆ นำเข้าข้อมูล</button>
+    </div>
+  </section>
+  <div class="footnote">ข้อมูลเก็บในเบราว์เซอร์เครื่องคุณเอง — กดสำรองข้อมูลเป็นระยะ</div>
+</div><!-- /app-diary -->
+
+<!-- ==================== TGR APP ==================== -->
+<div id="app-tgr" class="wrap" style="display:none">
+  <header class="top">
+    <h1>Think and Grow Rich · Minervini</h1>
+    <p>TGR 13 หลักการ + Minervini 6 กฎเทรด — ติดตามพัฒนาการรายวัน/รายสัปดาห์</p>
+  </header>
+
+  <div class="goalbox">
+    <label>🎯 เป้าหมายหลักของฉัน</label>
+    <input id="t-goal" placeholder="เช่น พอร์ตเทรด 550,000 บาท ภายใน 31 ธ.ค. 2569 — แลกด้วย...">
+    <div class="hint">หลักการที่ 1: เขียนจำนวน + วันที่ + สิ่งที่จะลงแรงให้ชัด แล้วอ่านออกเสียงทุกเช้า-เย็น</div>
+  </div>
+
+  <nav class="tabs" id="t-tabs">
+    <button class="active" data-tab="t-daily">☀️ รายวัน</button>
+    <button data-tab="t-weekly">📅 รายสัปดาห์</button>
+    <button data-tab="t-trade">📊 เทรด</button>
+    <button data-tab="t-play">📖 คู่มือ</button>
+    <button data-tab="t-progress">📈 พัฒนาการ</button>
+  </nav>
+
+  <!-- DAILY -->
+  <section class="tab active" id="t-daily">
+    <div class="readcard" id="t-readCard">
+      <div class="readlabel">📢 อ่านออกเสียง — เช้า เย็น <span>เห็นภาพและรู้สึกว่าได้มาแล้ว</span></div>
+      <div class="readtext" id="t-readText">— ยังไม่ได้ตั้งเป้าหมาย —</div>
+      <div class="readsteps">หลักการที่ 1 · ความปรารถนา: เขียนจำนวน + วันที่ + สิ่งที่จะลงแรง → อ่านออกเสียงเช้า-เย็น</div>
+    </div>
+    <div class="datebar">
+      <input type="date" id="t-dailyDate">
+      <span class="pill" id="t-streakPill">🔥 ต่อเนื่อง 0 วัน</span>
+      <span class="saved" id="t-dailySaved">✓ บันทึกแล้ว</span>
+    </div>
+    <div class="two">
+      <div class="card"><h2>☀️ เช้า</h2><div class="sub">ปลุกจิตใต้สำนึก + ตั้งทิศทางของวัน</div><div id="t-morning"></div></div>
+      <div class="card"><h2>🌙 เย็น</h2><div class="sub">ทบทวน + ปล่อยอารมณ์ลบ</div><div id="t-evening"></div></div>
+    </div>
+    <div class="card">
+      <h3>📝 บันทึกของวันนี้</h3>
+      <div class="sub">งานสำคัญที่ลงมือ · สิ่งที่เรียนรู้ · อะไรที่จะปรับพรุ่งนี้</div>
+      <textarea id="t-dailyNote" placeholder="วันนี้ฉัน…"></textarea>
+      <div class="row-actions">
+        <button class="btn" onclick="T.saveDaily()">บันทึกรายวัน</button>
+        <span id="t-ghStatus" style="font-size:13px;opacity:0;transition:.5s;margin-left:6px"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- WEEKLY -->
+  <section class="tab" id="t-weekly">
+    <div class="datebar">
+      <input type="date" id="t-weekDate">
+      <span class="pill" id="t-weekPill"></span>
+      <span class="saved" id="t-weekSaved">✓ บันทึกแล้ว</span>
+    </div>
+    <div class="card">
+      <h2>🧭 ให้คะแนนตัวเอง — 13 หลักการ</h2>
+      <div class="sub">1 = ยังไม่ได้ทำเลย · 5 = ทำได้ดีมากสม่ำเสมอ</div>
+      <div id="t-scores"></div>
+    </div>
+    <div class="card">
+      <h2>👻 ตรวจ "6 ผีแห่งความกลัว"</h2>
+      <div class="sub">ติ๊กข้อที่ครอบงำเราสัปดาห์นี้</div>
+      <div id="t-fears"></div>
+    </div>
+    <div class="two">
+      <div class="card"><h3>🏆 ชัยชนะของสัปดาห์</h3><textarea id="t-weekWin" placeholder="สิ่งที่ทำได้ดี…"></textarea></div>
+      <div class="card"><h3>🔧 จะปรับอะไรสัปดาห์หน้า</h3><textarea id="t-weekFix" placeholder="1 อย่างที่จะโฟกัส…"></textarea></div>
+    </div>
+    <div class="row-actions"><button class="btn" onclick="T.saveWeek()">บันทึกรายสัปดาห์</button></div>
+  </section>
+
+  <!-- TRADE -->
+  <section class="tab" id="t-trade">
+    <div class="readcard" style="background:linear-gradient(135deg,#0d2318,#1a2129)">
+      <div class="readlabel" style="color:var(--green)">📊 Minervini — 6 กฎเทรด <span>ก้มหน้าทำ ไม่มีข้อยกเว้น</span></div>
+      <div class="readtext" style="font-size:15px;color:var(--txt)">ไม่มี Stop = ไม่เข้า · ถึง Stop = ขายทันที · เข้าเฉพาะ Stage 2</div>
+      <div class="readsteps">Minervini: ปกป้องเงินต้นก่อน → ตัดขาดทุนเร็ว → เข้าเฉพาะขาขึ้น → ยืนยันด้วยวอลุ่ม → จด journal → ทบทวนทุกสัปดาห์</div>
+    </div>
+    <div class="datebar">
+      <input type="date" id="t-tradeDate">
+      <span class="pill" id="t-tradePill"></span>
+      <span class="saved" id="t-tradeSaved">✓ บันทึกแล้ว</span>
+    </div>
+    <div class="card">
+      <h2>📊 คะแนนวินัยเทรด — Minervini 6 กฎ</h2>
+      <div class="sub">1 = ไม่ได้ทำเลย · 5 = ทำครบทุก trade สม่ำเสมอ</div>
+      <div id="t-minScores"></div>
+    </div>
+    <div class="card">
+      <h3>💰 Portfolio วันนี้</h3>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px">
+        <label style="color:var(--muted);font-size:13px">มูลค่าพอร์ต (บาท):</label>
+        <input id="t-portfolioVal" type="number" placeholder="420000" style="width:160px">
+        <div id="t-portfolioProgress" style="color:var(--green);font-size:13px;font-weight:600"></div>
+      </div>
+    </div>
+    <div class="two">
+      <div class="card"><h3>⚠️ Trade ที่แหกกฎ</h3><textarea id="t-tradeBreak" placeholder="แหกกฎข้อไหน เกิดจากอะไร…"></textarea></div>
+      <div class="card"><h3>📋 จะแก้อะไรสัปดาห์หน้า</h3><textarea id="t-tradeFix" placeholder="กฎที่จะปรับ…"></textarea></div>
+    </div>
+    <div class="card">
+      <h3>📝 Journal วันนี้</h3>
+      <textarea id="t-tradeJournal" placeholder="ซื้อ/ขาย: [ชื่อหุ้น] เหตุผล: ... ผลลัพธ์: ...&#10;Stop ตั้งไว้ที่: ..."></textarea>
+    </div>
+    <div class="row-actions"><button class="btn" onclick="T.saveTrade()">บันทึกการเทรด</button></div>
+  </section>
+
+  <!-- PLAYBOOK -->
+  <section class="tab" id="t-play">
+    <div class="card">
+      <h2>📖 คู่มือลงมือทำ — 13 หลักการ</h2>
+      <div class="sub">คำถามสะท้อนตัวเอง + ขั้นตอนลงมือ · กดเพื่อขยาย</div>
+      <div id="t-playbook"></div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="tab" id="t-progress">
+    <div class="card">
+      <h2>📈 ภาพรวมพัฒนาการ</h2>
+      <div class="statgrid">
+        <div class="stat"><div class="big" id="t-stStreak">0</div><div class="lbl">ต่อเนื่องตอนนี้</div></div>
+        <div class="stat"><div class="big" id="t-stBest">0</div><div class="lbl">สถิติสูงสุด</div></div>
+        <div class="stat"><div class="big" id="t-stDays">0</div><div class="lbl">วันที่ลงมือรวม</div></div>
+        <div class="stat"><div class="big" id="t-stWeekAvg">–</div><div class="lbl">คะแนนเฉลี่ย</div></div>
+      </div>
+      <div class="heat" id="t-heat"></div>
+      <div class="sub" style="margin-top:6px">60 วันล่าสุด — เข้มขึ้น = ทำพิธีกรรมครบ</div>
+    </div>
+    <div class="card barwrap">
+      <h2>คะแนนเฉลี่ยรายสัปดาห์</h2>
+      <div class="bars" id="t-weekBars"></div>
+    </div>
+    <div class="card">
+      <h2>จุดแข็ง–จุดอ่อน (สัปดาห์ล่าสุด)</h2>
+      <div id="t-radar"></div>
+    </div>
+    <div class="row-actions">
+      <button class="btn ghost" onclick="T.exportData()">⬇ สำรองข้อมูล (JSON)</button>
+      <input type="file" id="t-importFile" accept="application/json" style="display:none" onchange="T.importData(event)">
+      <button class="btn ghost" onclick="document.getElementById('t-importFile').click()">⬆ นำเข้าข้อมูล</button>
+    </div>
+  </section>
+  <div class="footnote">ข้อมูลทั้งหมดถูกบันทึกไว้ในเบราว์เซอร์นี้ — ไม่มีการส่งออกที่ไหน</div>
+</div><!-- /app-tgr -->
+
+<!-- BOTTOM NAV (shared) -->
+<nav class="botnav">
+  <a data-app="diary" onclick="switchApp('diary')"><span class="icon">📔</span><span>Diary</span></a>
+  <a data-app="tgr" onclick="switchApp('tgr')"><span class="icon">📊</span><span>TGR</span></a>
+</nav>
+
+<script>
+/* ===== SHARED ===== */
+function todayStr(d=new Date()){return d.toISOString().slice(0,10)}
+function weekKey(dateStr){
+  const d=new Date(dateStr+"T00:00:00"),dt=new Date(d);
+  dt.setDate(dt.getDate()+4-(dt.getDay()||7));
+  const ys=new Date(dt.getFullYear(),0,1);
+  const wk=Math.ceil((((dt-ys)/86400000)+1)/7);
+  return dt.getFullYear()+"-W"+String(wk).padStart(2,"0");
+}
+function esc(s){return(s||"").replace(/</g,"&lt;")}
+function escq(s){return(s||"").replace(/"/g,"&quot;")}
+function uid(){return"x"+Math.random().toString(36).slice(2,8)}
+
+/* ===== APP SWITCHER ===== */
+function switchApp(name){
+  document.getElementById("app-diary").style.display=name==="diary"?"block":"none";
+  document.getElementById("app-tgr").style.display=name==="tgr"?"block":"none";
+  document.querySelectorAll(".botnav a").forEach(a=>a.classList.toggle("here",a.dataset.app===name));
+  localStorage.setItem("lastApp",name);
+}
+switchApp(localStorage.getItem("lastApp")||"diary");
+
+/* ===== DIARY MODULE ===== */
+const D=(function(){
+const POS=["ปรารถนา","ศรัทธา","รัก","ใจจดจ่อ","กระตือรือร้น","ตื่นเต้น","หวัง"];
+const NEG=["กลัว","อิจฉา","เกลียด","แค้น","โลภ","งมงาย","โกรธ"];
+const PROMPTS=[
+  "วันนี้มีอะไรที่ทำได้ดี / ภูมิใจบ้าง?","วันนี้รู้สึกยังไง และอะไรทำให้รู้สึกแบบนั้น?",
+  "วันนี้ได้เรียนรู้อะไรที่มีประโยชน์?","ถ้าย้อนวันนี้ได้ จะทำอะไรต่างไป 1 อย่าง?",
+  "วันนี้ฉันลงมือทำอะไรที่เข้าใกล้สิ่งที่ตั้งใจ?","อะไรที่ฉันผัดผ่อนวันนี้ และเพราะอะไร?",
+  "วันนี้ฉันได้โหวตให้ตัวตนแบบไหนบ้าง?","งานลานข้าว/ธุรกิจวันนี้มีอะไรน่าจดไว้?",
+  "วันนี้ฉันป้อนอารมณ์บวกหรือลบให้ตัวเองมากกว่ากัน?","พรุ่งนี้สิ่งสำคัญที่สุด 1 อย่างคืออะไร?"
+];
+const DEF_IDENT=["คนมีวินัย ทำตามแผน","คนที่อ่านแล้วลงมือทำจริง","นักลงทุนที่มีระบบของตัวเอง"];
+const DEF_HABITS=[{id:"h1",name:"อ่าน + จด 1 อย่างที่จะลงมือ",cue:"ก่อนนอน"},{id:"h2",name:"ออกกำลังกาย / ดูแลสุขภาพ",cue:"ตอนตื่นเช้า"}];
+const KEY="tgr_diary_v2";
+let DB=loadDB();
+function loadDB(){try{const d=JSON.parse(localStorage.getItem(KEY))||{};d.entries=d.entries||{};d.config=d.config||{};
+  d.config.identities=d.config.identities||DEF_IDENT.slice();d.config.habits=d.config.habits||DEF_HABITS.slice();return d}
+  catch(e){return{entries:{},config:{identities:DEF_IDENT.slice(),habits:DEF_HABITS.slice()}}}}
+function saveDB(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}}
+function flash(){["d-saved","d-saved2"].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),1200)}})}
+function dayOfYear(ds){const d=new Date(ds+"T00:00:00");return Math.floor((d-new Date(d.getFullYear(),0,0))/86400000)}
+function prevDay(ds){const d=new Date(ds+"T00:00:00");d.setDate(d.getDate()-1);return todayStr(d)}
+
+// tabs
+document.querySelectorAll("#d-tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#d-tabs button").forEach(x=>x.classList.remove("active"));
+  ["d-write","d-review","d-stats"].forEach(id=>document.getElementById(id).classList.remove("active"));
+  b.classList.add("active");document.getElementById(b.dataset.tab).classList.add("active");
+  if(b.dataset.tab==="d-review")renderList();if(b.dataset.tab==="d-stats")renderStats();
+});
+
+const dEl=document.getElementById("d-date");dEl.value=todayStr();dEl.onchange=renderWrite;
+function cur(){const k=dEl.value;DB.entries[k]=DB.entries[k]||{text:"",emotions:{pos:[],neg:[]},grat:["","",""],plan:[],habitsDone:{},identityVotes:{},readAction:""};
+  const e=DB.entries[k];e.habitsDone=e.habitsDone||{};e.identityVotes=e.identityVotes||{};return e;}
+
+function renderWrite(){
+  const e=cur();
+  document.getElementById("d-promptQ").textContent=PROMPTS[dayOfYear(dEl.value)%PROMPTS.length];
+  document.getElementById("d-text").value=e.text||"";
+  document.getElementById("d-readAction").value=e.readAction||"";
+  buildChips("d-posChips",POS,"pos",e);buildChips("d-negChips",NEG,"neg",e);
+  const g=document.getElementById("d-grat");g.innerHTML="";
+  for(let i=0;i<3;i++){const row=document.createElement("div");row.className="grat-row";
+    row.innerHTML=`<span class="n">${i+1}</span><input type="text" value="${escq(e.grat[i])}" placeholder="สิ่งที่ขอบคุณ…">`;
+    row.querySelector("input").oninput=ev=>{e.grat[i]=ev.target.value;saveDB();flash()};g.appendChild(row);}
+  renderHabits();renderIdents();renderPlan();renderFollow();updateStreak();
+}
+function buildChips(id,arr,bucket,e){const c=document.getElementById(id);c.innerHTML="";
+  arr.forEach((name,i)=>{const on=e.emotions[bucket].includes(i);
+    const chip=document.createElement("span");chip.className="chip "+bucket+(on?" on":"");chip.textContent=name;
+    chip.onclick=()=>{const idx=e.emotions[bucket].indexOf(i);if(idx>=0)e.emotions[bucket].splice(idx,1);else e.emotions[bucket].push(i);
+      chip.classList.toggle("on");saveDB();flash()};c.appendChild(chip);});}
+document.getElementById("d-text").oninput=ev=>{cur().text=ev.target.value;saveDB();flash()};
+document.getElementById("d-readAction").oninput=ev=>{cur().readAction=ev.target.value;saveDB();flash()};
+
+function habitStreak(hid){let s=0,d=new Date();for(;;){const k=todayStr(d);const e=DB.entries[k];
+  if(e&&e.habitsDone&&e.habitsDone[hid]){s++;d.setDate(d.getDate()-1);}
+  else{if(k===todayStr())d.setDate(d.getDate()-1);else break;}}return s;}
+function renderHabits(){
+  const e=cur();const c=document.getElementById("d-habits");c.innerHTML="";
+  if(!DB.config.habits.length){c.innerHTML='<div class="empty">ยังไม่มีนิสัย — กด ⚙️ ตั้งค่านิสัย</div>';}
+  DB.config.habits.forEach(h=>{const done=!!e.habitsDone[h.id];const strk=habitStreak(h.id);
+    const row=document.createElement("div");row.className="checkrow"+(done?" done":"");
+    row.innerHTML=`<input type="checkbox" ${done?"checked":""}><div class="body"><div class="main">${esc(h.name)}</div>
+      <div class="cue">หลังจาก <b>${esc(h.cue||"…")}</b> ฉันจะทำสิ่งนี้</div></div><div class="strk">🔥 ${strk}</div>`;
+    row.querySelector("input").onchange=ev=>{e.habitsDone[h.id]=ev.target.checked;row.classList.toggle("done",ev.target.checked);
+      row.querySelector(".strk").textContent="🔥 "+habitStreak(h.id);saveDB();flash()};c.appendChild(row);});
+  const cfg=document.getElementById("d-habitCfg");cfg.innerHTML="";
+  DB.config.habits.forEach((h,i)=>{const row=document.createElement("div");row.className="habit-cfg";
+    row.innerHTML=`<input class="nm" type="text" value="${escq(h.name)}" placeholder="ชื่อนิสัย">
+      <input class="cue" type="text" value="${escq(h.cue)}" placeholder="จุดผูก"><button class="del">✕</button>`;
+    row.querySelector(".nm").oninput=ev=>{h.name=ev.target.value;saveDB();renderHabits()};
+    row.querySelector(".cue").oninput=ev=>{h.cue=ev.target.value;saveDB();renderHabits()};
+    row.querySelector(".del").onclick=()=>{DB.config.habits.splice(i,1);saveDB();renderHabits()};
+    cfg.appendChild(row);});
+}
+function addHabit(){DB.config.habits.push({id:uid(),name:"",cue:""});saveDB();renderHabits();}
+
+function renderIdents(){
+  const e=cur();const c=document.getElementById("d-idents");c.innerHTML="";
+  DB.config.identities.forEach((name,i)=>{const on=!!e.identityVotes[i];
+    const row=document.createElement("div");row.className="ident"+(on?" on":"");
+    row.innerHTML=`<input type="checkbox" ${on?"checked":""}><div class="t">ฉันคือ "${esc(name)}"</div>`;
+    row.querySelector("input").onchange=ev=>{e.identityVotes[i]=ev.target.checked;row.classList.toggle("on",ev.target.checked);saveDB();flash()};
+    c.appendChild(row);});
+  const cfg=document.getElementById("d-identCfg");cfg.innerHTML="";
+  DB.config.identities.forEach((name,i)=>{const row=document.createElement("div");row.className="habit-cfg";
+    row.innerHTML=`<input class="nm" type="text" value="${escq(name)}" placeholder="ตัวตนที่อยากเป็น"><button class="del">✕</button>`;
+    row.querySelector(".nm").oninput=ev=>{DB.config.identities[i]=ev.target.value;saveDB()};
+    row.querySelector(".del").onclick=()=>{DB.config.identities.splice(i,1);saveDB();renderIdents()};
+    cfg.appendChild(row);});
+}
+function addIdent(){DB.config.identities.push("");saveDB();renderIdents();}
+
+function renderPlan(){const e=cur();const p=document.getElementById("d-plan");p.innerHTML="";
+  if(!e.plan.length)p.innerHTML='<div class="empty">ยังไม่มีแผน — กด "+ เพิ่มแผน"</div>';
+  e.plan.forEach((item,i)=>{const row=document.createElement("div");row.className="plan-item";
+    row.innerHTML=`<input type="text" value="${escq(item.text)}" placeholder="สิ่งที่จะทำให้สำเร็จพรุ่งนี้…"><button>✕</button>`;
+    row.querySelector("input").oninput=ev=>{item.text=ev.target.value;saveDB();flash()};
+    row.querySelector("button").onclick=()=>{e.plan.splice(i,1);saveDB();renderPlan()};p.appendChild(row);});}
+function addPlan(){cur().plan.push({id:uid(),text:"",done:false,note:""});saveDB();renderPlan();}
+
+function renderFollow(){const k=prevDay(dEl.value);const ye=DB.entries[k];
+  const card=document.getElementById("d-followCard");const f=document.getElementById("d-follow");
+  const plans=(ye&&ye.plan)?ye.plan.filter(x=>x.text&&x.text.trim()):[];
+  if(!plans.length){card.style.display="none";return}card.style.display="block";f.innerHTML="";
+  plans.forEach(item=>{const row=document.createElement("div");row.className="checkrow"+(item.done?" done":"");
+    row.innerHTML=`<input type="checkbox" ${item.done?"checked":""}><div class="body"><div class="main">${esc(item.text)}</div>
+      <textarea class="sm" style="margin-top:6px" placeholder="ผลเป็นยังไง">${esc(item.note)}</textarea></div>`;
+    row.querySelector("input").onchange=ev=>{item.done=ev.target.checked;row.classList.toggle("done",ev.target.checked);saveDB();flash()};
+    row.querySelector("textarea").oninput=ev=>{item.note=ev.target.value;saveDB();flash()};f.appendChild(row);});}
+
+function hasContent(e){if(!e)return false;return (e.text&&e.text.trim())||e.emotions.pos.length||e.emotions.neg.length||
+  (e.grat&&e.grat.some(x=>x&&x.trim()))||(e.plan&&e.plan.some(x=>x.text&&x.text.trim()))||
+  (e.readAction&&e.readAction.trim())||(e.habitsDone&&Object.values(e.habitsDone).some(Boolean))||
+  (e.identityVotes&&Object.values(e.identityVotes).some(Boolean));}
+function currentStreak(){let s=0,d=new Date();for(;;){const k=todayStr(d);
+  if(hasContent(DB.entries[k])){s++;d.setDate(d.getDate()-1);}else{if(k===todayStr())d.setDate(d.getDate()-1);else break;}}return s;}
+function updateStreak(){document.getElementById("d-streak").textContent=`🔥 เขียนต่อเนื่อง ${currentStreak()} วัน`}
+async function saveNow(){saveDB();flash();await exportMarkdown();}
+
+function renderList(){
+  const q=(document.getElementById("d-search").value||"").toLowerCase().trim();
+  const list=document.getElementById("d-list");list.innerHTML="";
+  const keys=Object.keys(DB.entries).filter(k=>hasContent(DB.entries[k])).sort().reverse();let shown=0;
+  keys.forEach(k=>{const e=DB.entries[k];
+    const hay=((e.text||"")+" "+(e.readAction||"")+" "+(e.grat||[]).join(" ")+" "+(e.plan||[]).map(p=>p.text).join(" ")).toLowerCase();
+    if(q&&!hay.includes(q))return;shown++;
+    const pos=e.emotions.pos.map(i=>POS[i]),neg=e.emotions.neg.map(i=>NEG[i]);
+    const planTxt=(e.plan||[]).filter(p=>p.text&&p.text.trim());const doneN=planTxt.filter(p=>p.done).length;
+    const habN=Object.values(e.habitsDone||{}).filter(Boolean).length;
+    const det=document.createElement("details");det.className="entry";
+    const snip=(e.text||e.readAction||"").replace(/\n/g," ").slice(0,55)||"(ไม่มีข้อความ)";
+    det.innerHTML=`<summary><span class="date">${k}</span><span class="snip">${esc(snip)}</span>
+      <span class="mini">${habN?"🎯"+habN:""} ${pos.length?"🟢"+pos.length:""} ${neg.length?"🔴"+neg.length:""} ${planTxt.length?"📋"+doneN+"/"+planTxt.length:""}</span></summary>
+      <div class="ebody">
+        ${e.text?`<div class="blk"><div class="h">บันทึก</div><div class="t">${esc(e.text)}</div></div>`:""}
+        ${e.readAction&&e.readAction.trim()?`<div class="blk"><div class="h">อ่านแล้วจะลงมือ</div><div class="t">${esc(e.readAction)}</div></div>`:""}
+        ${(pos.length||neg.length)?`<div class="blk"><div class="h">อารมณ์</div><div class="t">${[...pos.map(x=>"🟢"+x),...neg.map(x=>"🔴"+x)].join("  ")}</div></div>`:""}
+        ${(e.grat||[]).some(x=>x&&x.trim())?`<div class="blk"><div class="h">ขอบคุณ</div><div class="t">${esc(e.grat.filter(x=>x&&x.trim()).map((x,i)=>(i+1)+". "+x).join("\n"))}</div></div>`:""}
+        ${planTxt.length?`<div class="blk"><div class="h">แผน (${doneN}/${planTxt.length})</div><div class="t">${esc(planTxt.map(p=>(p.done?"✅ ":"⬜ ")+p.text).join("\n"))}</div></div>`:""}
+      </div>`;
+    list.appendChild(det);});
+  if(!shown)list.innerHTML='<div class="empty">'+(q?"ไม่พบบันทึกที่ตรงกับคำค้น":"ยังไม่มีบันทึก เริ่มเขียนวันนี้ได้เลย")+"</div>";
+}
+
+function renderStats(){
+  document.getElementById("d-stStreak").textContent=currentStreak();
+  const keys=Object.keys(DB.entries).filter(k=>hasContent(DB.entries[k]));
+  document.getElementById("d-stTotal").textContent=keys.length;
+  let pd=0,pt=0,pc=0,nc=0;const posC=Array(POS.length).fill(0),negC=Array(NEG.length).fill(0);
+  keys.forEach(k=>{const e=DB.entries[k];(e.plan||[]).forEach(p=>{if(p.text&&p.text.trim()){pt++;if(p.done)pd++;}});
+    e.emotions.pos.forEach(i=>{posC[i]++;pc++});e.emotions.neg.forEach(i=>{negC[i]++;nc++});});
+  document.getElementById("d-stPlan").textContent=pt?Math.round(pd/pt*100)+"%":"–";
+  document.getElementById("d-stRatio").textContent=(pc+nc)?pc+":"+nc:"–";
+  const hc=document.getElementById("d-habitStats");hc.innerHTML="";
+  if(!DB.config.habits.length)hc.innerHTML='<div class="empty">ยังไม่มีนิสัย</div>';
+  DB.config.habits.forEach(h=>{let done=0;for(let i=0;i<30;i++){const dd=new Date();dd.setDate(dd.getDate()-i);
+      const e=DB.entries[todayStr(dd)];if(e&&e.habitsDone&&e.habitsDone[h.id])done++;}
+    const pct=Math.round(done/30*100);const strk=habitStreak(h.id);
+    const row=document.createElement("div");row.className="hbar";
+    row.innerHTML=`<div class="hn">${esc(h.name)}</div><div class="htrack"><div class="hfill" style="width:${pct}%;background:linear-gradient(90deg,#3b9468,#5bc491)"></div></div><div class="hv" style="color:#92e2b9">${pct}% 🔥${strk}</div>`;
+    hc.appendChild(row);
+    const heat=document.createElement("div");heat.className="heat";
+    for(let i=29;i>=0;i--){const dd=new Date();dd.setDate(dd.getDate()-i);const e=DB.entries[todayStr(dd)];
+      const on=e&&e.habitsDone&&e.habitsDone[h.id];const c=document.createElement("div");c.className="d"+(on?" on":"");c.title=todayStr(dd);heat.appendChild(c);}
+    hc.appendChild(heat);});
+  const ic=document.getElementById("d-identStats");ic.innerHTML="";
+  const idc=DB.config.identities.map(()=>0);
+  keys.forEach(k=>{const v=DB.entries[k].identityVotes||{};Object.keys(v).forEach(i=>{if(v[i]&&idc[i]!==undefined)idc[i]++;});});
+  const idmax=Math.max(1,...idc);
+  DB.config.identities.forEach((n,i)=>{const row=document.createElement("div");row.className="hbar";
+    row.innerHTML=`<div class="hn">${esc(n)}</div><div class="htrack"><div class="hfill" style="width:${idc[i]/idmax*100}%;background:linear-gradient(90deg,#b8932f,#f5cf6b)"></div></div><div class="hv" style="color:#f5cf6b">${idc[i]}</div>`;
+    ic.appendChild(row);});
+  const mb=document.getElementById("d-moodBars");mb.innerHTML="";
+  const all=[...POS.map((n,i)=>({n,c:posC[i],col:"linear-gradient(90deg,#3b9468,#54c08a)",tc:"#92e2b9"})),
+             ...NEG.map((n,i)=>({n,c:negC[i],col:"linear-gradient(90deg,#b04f47,#e0746a)",tc:"#f1a79f"}))].filter(x=>x.c>0).sort((a,b)=>b.c-a.c);
+  const mmax=Math.max(1,...all.map(x=>x.c));
+  if(!all.length){mb.innerHTML='<div class="empty">ยังไม่มีข้อมูลอารมณ์</div>'}
+  all.forEach(x=>{const row=document.createElement("div");row.className="hbar";
+    row.innerHTML=`<div class="hn">${x.n}</div><div class="htrack"><div class="hfill" style="width:${x.c/mmax*100}%;background:${x.col}"></div></div><div class="hv" style="color:${x.tc}">${x.c}</div>`;
+    mb.appendChild(row);});
+}
+
+const GITHUB_TOKEN="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";
+const GITHUB_REPO="Chuu007/wind-diary";
+async function pushToGitHub(path,content){
+  const encoded=btoa(unescape(encodeURIComponent(content)));let sha=null;
+  try{const r=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`,
+    {headers:{"Authorization":`Bearer ${GITHUB_TOKEN}`,"User-Agent":"diary-app"}});
+    if(r.ok){const d=await r.json();sha=d.sha;}}catch(e){}
+  const body={message:`diary update ${todayStr()}`,content:encoded};if(sha)body.sha=sha;
+  const res=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`,{
+    method:"PUT",headers:{"Authorization":`Bearer ${GITHUB_TOKEN}`,"Content-Type":"application/json","User-Agent":"diary-app"},body:JSON.stringify(body)});
+  return res.ok;
+}
+async function exportMarkdown(){
+  const days=Object.keys(DB.entries).sort().reverse();if(!days.length)return;
+  const habits=DB.config.habits||DEF_HABITS,idents=DB.config.identities||DEF_IDENT;
+  let md=`# ไดอารี่ Wind — Export สำหรับ Claude\nวันที่ export: ${todayStr()} | บันทึกทั้งหมด: ${days.length} วัน\n\n---\n\n`;
+  days.forEach(date=>{const e=DB.entries[date];if(!e)return;
+    const d=new Date(date+"T00:00:00");const dn=["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัส","ศุกร์","เสาร์"];
+    md+=`## 📅 ${date} (${dn[d.getDay()]})\n\n`;
+    if(e.text)md+=`**✍️ บันทึกวันนี้**\n${e.text}\n\n`;
+    if(e.readAction)md+=`**📖 อ่านแล้วจะลงมือ**\n${e.readAction}\n\n`;
+    const pn=(e.emotions?.pos||[]).map(i=>POS[i]).filter(Boolean);const nn=(e.emotions?.neg||[]).map(i=>NEG[i]).filter(Boolean);
+    if(pn.length||nn.length){md+=`**🎭 อารมณ์**\n`;if(pn.length)md+=`- บวก: ${pn.join(", ")}\n`;if(nn.length)md+=`- ลบ: ${nn.join(", ")}\n`;md+="\n";}
+    const grat=(e.grat||[]).filter(Boolean);if(grat.length){md+=`**🙏 ขอบคุณ**\n`;grat.forEach((g,i)=>md+=`${i+1}. ${g}\n`);md+="\n";}
+    if(habits.length){md+=`**✅ นิสัย**\n`;habits.forEach(h=>{const done=!!(e.habitsDone||{})[h.id];md+=`- [${done?"x":" "}] ${h.name}\n`;});md+="\n";}
+    md+="---\n\n";});
+  const ghEl=document.getElementById("d-ghStatus");
+  if(ghEl){ghEl.textContent="☁️ กำลังส่ง...";ghEl.style.opacity=1;ghEl.style.color="var(--muted)";}
+  const ok=await pushToGitHub("diary/diary.md",md);
+  if(ghEl){ghEl.textContent=ok?"☁️ GitHub ✓":"⚠️ GitHub ✗";ghEl.style.color=ok?"var(--green)":"var(--red)";setTimeout(()=>{ghEl.style.opacity=0;},3000);}
+}
+function exportData(){const blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="diary-backup-"+todayStr()+".json";a.click();}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const o=JSON.parse(r.result);o.entries=o.entries||{};o.config=o.config||{identities:DEF_IDENT.slice(),habits:DEF_HABITS.slice()};DB=o;saveDB();renderWrite();alert("นำเข้าสำเร็จ")}catch(e){alert("ไฟล์ไม่ถูกต้อง")}};r.readAsText(f);}
+
+renderWrite();
+return{addHabit,addIdent,addPlan,saveNow,renderList,renderStats,exportData,importData};
+})();
+
+/* ===== TGR MODULE ===== */
+const T=(function(){
+const PRINCIPLES=[
+  {n:1,th:"ความปรารถนา",en:"Desire",q:["ฉันต้องการเป้าหมาย/จำนวนเท่าไร และภายในเมื่อไร?","ฉันยอมสละหรือลงแรงอะไรเพื่อแลกมา?","แผนแรกที่จะลงมือ 'ทันที' คืออะไร?"],s:["เขียนจำนวน + วันที่ให้ชัดเจน","ระบุสิ่งที่จะให้เป็นการตอบแทน","เขียนแผนแน่นอน แล้วลงมือทันที","อ่านออกเสียงเช้า-เย็น เห็นภาพว่าได้มาแล้ว"]},
+  {n:2,th:"ศรัทธา / เชื่อมั่นในตัวเอง",en:"Faith",q:["ฉันเชื่อจริงไหมว่าทำได้?","อะไรกำลังบั่นทอนความเชื่อของฉัน?"],s:["ใช้เวลา ~10 นาที/วัน จดจ่อภาพตัวเองที่สำเร็จ","ไม่ปล่อยให้ใครมาดูถูกความเชื่อของเรา","คิดให้สูง มั่นใจ — ความสำเร็จเริ่มที่ความคิด"]},
+  {n:3,th:"การสั่งจิต",en:"Auto-Suggestion",q:["วันนี้ฉันย้ำเป้าหมายกับจิตใต้สำนึกหรือยัง?"],s:["หาที่สงบ หลับตา จินตนาการว่าได้เป้าหมายนั้นแล้ว","ทำซ้ำเช้า-เย็นทุกวัน","วางเป้าหมายไว้ในจุดที่เห็นได้บ่อยๆ"]},
+  {n:4,th:"ความรู้เฉพาะทาง",en:"Specialized Knowledge",q:["ความรู้อะไรที่จำเป็นต่อเป้าหมาย และฉันยังขาด?"],s:["วางแผนเรียนรู้ต่อเนื่อง","ดึงความรู้ของคนอื่นมาใช้ผ่านทีม","เลือกความรู้ที่สอดคล้องกับจุดมุ่งหมาย"]},
+  {n:5,th:"จินตนาการ",en:"Imagination",q:["ฉันออกแบบวิธีใหม่ๆ ไปถึงเป้าหมายหรือยัง?"],s:["เรียบเรียงไอเดียจากประสบการณ์ → สิ่งใหม่","ฝึกฟังแนวคิดที่ผุดขึ้น","ยิ่งใช้จินตนาการบ่อย ยิ่งคล่องขึ้น"]},
+  {n:6,th:"วางแผนอย่างมีระบบ",en:"Organized Planning",q:["แผนของฉันมีจุดบกพร่องตรงไหน?","ใครคือทีม/แนวร่วมของฉัน?"],s:["ดูคนที่สำเร็จเป็นต้นแบบ","สร้างกลุ่มพลังความคิด","แพ้ชั่วคราว ≠ ล้มเหลวถาวร → ปรับแผนแล้วลุยต่อ"]},
+  {n:7,th:"การตัดสินใจ",en:"Decision",q:["เรื่องไหนที่ฉันผัดผ่อน ไม่ยอมตัดสินใจ?"],s:["ตัดสินใจให้เร็ว เปลี่ยนใจให้ช้า","อย่าให้ความเห็นคนอื่นครอบงำ","ลงมือทำให้สำเร็จก่อน ค่อยให้ผลงานพูดแทน"]},
+  {n:8,th:"ความมุ่งมั่น",en:"Persistence",q:["สัปดาห์นี้ฉันมีอาการขาดความมุ่งมั่นข้อไหนบ้าง?"],s:["เป้าหมายชัด + ความอยากสำเร็จ","แผนแน่นอน + ทำต่อเนื่อง","หาแนวร่วม — ทำจนเป็นนิสัย"]},
+  {n:9,th:"พลังความคิด",en:"Master Mind",q:["ฉันมีกลุ่มคนเก่งช่วยหนุนพลังความคิดไหม?"],s:["รวม จินตนาการ + ประสบการณ์ + การทดลอง","เปิดรับพลังจากกลุ่ม","เปลี่ยนแผน → การกระทำ ด้วยพลังที่มากพอ"]},
+  {n:10,th:"การแปรพลังจากเพศ",en:"Sex Transmutation",q:["ฉันแปรแรงขับ/พลังงานเป็นแรงทำงานได้ไหม?"],s:["เปลี่ยนแรงขับเป็นแรงจูงใจสร้างสรรค์","ระวังการหมกมุ่น"]},
+  {n:11,th:"จิตใต้สำนึก",en:"Subconscious Mind",q:["วันนี้ฉันป้อนอารมณ์บวกหรือลบให้จิตใต้สำนึก?"],s:["เลี้ยงอารมณ์บวก: ปรารถนา ศรัทธา รัก กระตือรือร้น หวัง","ปิดกั้นอารมณ์ลบ: กลัว อิจฉา เกลียด แค้น โลภ โกรธ"]},
+  {n:12,th:"สมอง",en:"The Brain",q:["ฉันกำลังเปิดรับ/ส่งความคิดแบบไหน?"],s:["ใช้จินตนาการเป็น 'เครื่องรับ' ความคิดดีๆ","ใช้จิตใต้สำนึกเป็น 'เครื่องส่ง'"]},
+  {n:13,th:"สัมผัสที่หก",en:"The Sixth Sense",q:["ฉันฟังลางสังหรณ์ของตัวเองไหม?"],s:["ทำ 12 ข้อก่อนหน้าให้ครบก่อน","เชื่อว่า ความคิดเป็นจริงได้เกินกว่าจินตนาการ"]},
+];
+const MORNING=[["อ่านเป้าหมายออกเสียง — เห็นภาพว่าได้มาแล้ว","สั่งจิต"],["จินตนาการความสำเร็จ 1–2 นาที","ปรารถนา"],["เขียน 3 งานสำคัญที่ขยับเข้าหาเป้าหมายวันนี้","วางแผน"],["ยืนยันกับตัวเอง: 'ฉันทำได้'","ศรัทธา"],["(ถ้าเทรด) ตั้ง stop ก่อนเข้าทุก position","Minervini"]];
+const EVENING=[["ทบทวน: วันนี้ทำตามแผนแค่ไหน","มุ่งมั่น"],["อ่านเป้าหมายออกเสียงอีกครั้ง","สั่งจิต"],["บันทึก 1 สิ่งที่เรียนรู้/จะปรับ","จินตนาการ"],["(ถ้าเทรด) จด trade journal","Minervini"],["ปล่อยอารมณ์ลบ เลี้ยงอารมณ์บวก","จิตใต้สำนึก"]];
+const FEARS=["กลัวความยากจน (เฉื่อยชา/ไม่ดิ้นรน/โทษโชค)","กลัวคำวิจารณ์ (ขี้อาย/ไม่กล้าริเริ่ม/หูเบา)","กลัวความเจ็บป่วย","กลัวสูญเสียความรัก","กลัวความแก่","กลัวความตาย"];
+const MINERVINI=[
+  {n:"M1",th:"ปกป้องเงินต้นก่อนกำไร",q:["กำหนด stop ล่วงหน้าก่อนเข้าทุก position ไหม?"],s:["ไม่มี stop = ไม่เข้า — ไม่มีข้อยกเว้น"]},
+  {n:"M2",th:"ตัดขาดทุนให้เล็กและเร็ว",q:["มีครั้งไหนถึง stop แล้วไม่ขาย หรือถัวเฉลี่ยขาลง?"],s:["ขายทันทีที่ถึง stop","ไม่ถัวเฉลี่ยขาลงเด็ดขาด"]},
+  {n:"M3",th:"เข้าเฉพาะหุ้นขาขึ้น (Stage 2)",q:["หุ้นที่เข้าผ่านเกณฑ์ขาขึ้นจริงไหม?"],s:["เช็ก Trend Template ก่อนซื้อ","ไม่ไล่ซื้อหุ้นขาลง"]},
+  {n:"M4",th:"เข้าเมื่อมีวอลุ่มรองรับ",q:["ยืนยันการเข้าด้วยวอลุ่มสูงกว่าปกติไหม?"],s:["วอลุ่มสูง = สัญญาณยืนยันของสถาบัน"]},
+  {n:"M5",th:"จด Trade Journal ทุกครั้ง",q:["จดเหตุผล + ผลลัพธ์ครบทุก trade ไหม?"],s:["จดทันทีหลังซื้อ/ขาย"]},
+  {n:"M6",th:"ทบทวนความผิดพลาดเป็นรอบ",q:["เปิด journal แล้วดูว่าทำตามกฎครบไหม?"],s:["ทบทวนทุกสัปดาห์ — หาที่ผิดกฎแล้วแก้"]},
+];
+const KEY="tgr_dashboard_v1";
+let DB=loadDB();
+function loadDB(){try{const d=JSON.parse(localStorage.getItem(KEY))||{};d.daily=d.daily||{};d.weekly=d.weekly||{};d.playbook=d.playbook||{};d.goal=d.goal||"";d.trade=d.trade||{};return d}catch(e){return{goal:"",daily:{},weekly:{},playbook:{},trade:{}}}}
+function saveDB(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}}
+function flash(id){const el=document.getElementById(id);if(el){el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1500)}}
+
+// tabs
+document.querySelectorAll("#t-tabs button").forEach(b=>{b.onclick=()=>{
+  document.querySelectorAll("#t-tabs button").forEach(x=>x.classList.remove("active"));
+  ["t-daily","t-weekly","t-trade","t-play","t-progress"].forEach(id=>document.getElementById(id).classList.remove("active"));
+  b.classList.add("active");document.getElementById(b.dataset.tab).classList.add("active");
+  if(b.dataset.tab==="t-progress")renderProgress();if(b.dataset.tab==="t-trade")renderTrade();
+};});
+
+const goalEl=document.getElementById("t-goal");goalEl.value=DB.goal||"";
+function renderReadCard(){const card=document.getElementById("t-readCard"),txt=document.getElementById("t-readText");
+  const g=(DB.goal||"").trim();if(g){card.classList.remove("empty");txt.textContent="“"+g+"”";}
+  else{card.classList.add("empty");txt.textContent="— ยังไม่ได้ตั้งเป้าหมาย · พิมพ์ในช่อง 🎯 ด้านบน —";}}
+goalEl.oninput=()=>{DB.goal=goalEl.value;saveDB();renderReadCard()};
+
+const dDate=document.getElementById("t-dailyDate");dDate.value=todayStr();dDate.onchange=renderDaily;
+function buildChecks(list,containerId,bucket,rec){
+  const c=document.getElementById(containerId);c.innerHTML="";
+  list.forEach((item,i)=>{const checked=rec[bucket]&&rec[bucket][i];
+    const div=document.createElement("div");div.className="check"+(checked?" done":"");
+    div.innerHTML=`<input type="checkbox" ${checked?"checked":""} id="${bucket}_${i}">
+      <label for="${bucket}_${i}">${item[0]}<span class="tag">${item[1]}</span></label>`;
+    div.querySelector("input").onchange=e=>{rec[bucket]=rec[bucket]||{};rec[bucket][i]=e.target.checked;
+      div.classList.toggle("done",e.target.checked);saveDaily(true)};c.appendChild(div);});}
+function renderDaily(){const k=dDate.value;DB.daily[k]=DB.daily[k]||{};const rec=DB.daily[k];
+  buildChecks(MORNING,"t-morning","m",rec);buildChecks(EVENING,"t-evening","e",rec);
+  document.getElementById("t-dailyNote").value=rec.note||"";updateStreakPill();}
+document.getElementById("t-dailyNote").oninput=e=>{const k=dDate.value;DB.daily[k]=DB.daily[k]||{};DB.daily[k].note=e.target.value;saveDB();};
+async function saveDaily(silent){saveDB();updateStreakPill();if(!silent){flash("t-dailySaved");await exportMarkdown();}}
+
+function dayComplete(rec){if(!rec)return false;const m=rec.m||{},e=rec.e||{};let c=0;
+  for(let i=0;i<MORNING.length;i++)if(m[i])c++;for(let i=0;i<EVENING.length;i++)if(e[i])c++;
+  return c>=Math.ceil((MORNING.length+EVENING.length)/2);}
+function currentStreak(){let s=0;let d=new Date();for(;;){const k=todayStr(d);
+  if(dayComplete(DB.daily[k])){s++;d.setDate(d.getDate()-1);}else{if(k===todayStr())d.setDate(d.getDate()-1);else break;}}return s;}
+function bestStreak(){const days=Object.keys(DB.daily).filter(k=>dayComplete(DB.daily[k])).sort();
+  let best=0,cur=0,prev=null;days.forEach(k=>{if(prev){const diff=(new Date(k)-new Date(prev))/86400000;cur=diff===1?cur+1:1;}else cur=1;best=Math.max(best,cur);prev=k;});return best;}
+function updateStreakPill(){document.getElementById("t-streakPill").textContent=`🔥 ต่อเนื่อง ${currentStreak()} วัน`}
+
+const wDate=document.getElementById("t-weekDate");wDate.value=todayStr();wDate.onchange=renderWeek;
+function renderWeek(){const wk=weekKey(wDate.value);
+  document.getElementById("t-weekPill").textContent="สัปดาห์ "+wk;
+  DB.weekly[wk]=DB.weekly[wk]||{scores:{},fears:{}};const rec=DB.weekly[wk];
+  const sc=document.getElementById("t-scores");sc.innerHTML="";
+  PRINCIPLES.forEach(p=>{const v=rec.scores[p.n]||0;const row=document.createElement("div");row.className="score-row";
+    row.innerHTML=`<div class="name">${p.n}. ${p.th}</div><input type="range" min="0" max="5" value="${v}" id="tsc_${p.n}"><div class="num" id="tscn_${p.n}">${v||"–"}</div>`;
+    row.querySelector("input").oninput=e=>{rec.scores[p.n]=+e.target.value;document.getElementById("tscn_"+p.n).textContent=e.target.value};sc.appendChild(row);});
+  const fc=document.getElementById("t-fears");fc.innerHTML="";
+  FEARS.forEach((f,i)=>{const checked=rec.fears[i];const div=document.createElement("div");div.className="check"+(checked?" done":"");
+    div.innerHTML=`<input type="checkbox" ${checked?"checked":""} id="tf_${i}"><label for="tf_${i}">${f}</label>`;
+    div.querySelector("input").onchange=e=>{rec.fears[i]=e.target.checked;div.classList.toggle("done",e.target.checked)};fc.appendChild(div);});
+  document.getElementById("t-weekWin").value=rec.win||"";document.getElementById("t-weekFix").value=rec.fix||"";}
+document.getElementById("t-weekWin").oninput=e=>{const wk=weekKey(wDate.value);DB.weekly[wk].win=e.target.value};
+document.getElementById("t-weekFix").oninput=e=>{const wk=weekKey(wDate.value);DB.weekly[wk].fix=e.target.value};
+async function saveWeek(){saveDB();flash("t-weekSaved");await exportMarkdown();}
+
+const tDate=document.getElementById("t-tradeDate");tDate.value=todayStr();tDate.onchange=renderTrade;
+function renderTrade(){const wk=weekKey(tDate.value);
+  document.getElementById("t-tradePill").textContent="สัปดาห์ "+wk;
+  DB.trade[wk]=DB.trade[wk]||{minScores:{},breakNote:"",fixNote:"",journal:{}};const rec=DB.trade[wk];
+  const sc=document.getElementById("t-minScores");sc.innerHTML="";
+  MINERVINI.forEach(p=>{const v=rec.minScores[p.n]||0;const row=document.createElement("div");row.className="score-row";
+    row.innerHTML=`<div class="name" style="color:var(--green)">${p.n}. ${p.th}</div><input type="range" min="0" max="5" value="${v}" id="msc_${p.n}"><div class="num" id="mscn_${p.n}">${v||"–"}</div>`;
+    row.querySelector("input").oninput=e=>{rec.minScores[p.n]=+e.target.value;document.getElementById("mscn_"+p.n).textContent=e.target.value;saveDB()};sc.appendChild(row);});
+  const pv=document.getElementById("t-portfolioVal"),pp=document.getElementById("t-portfolioProgress");
+  const dk=tDate.value;rec.journal=rec.journal||{};pv.value=rec.journal[dk]?.portfolio||"";
+  updatePortfolioProgress(pv.value);
+  pv.oninput=e=>{rec.journal[dk]=rec.journal[dk]||{};rec.journal[dk].portfolio=+e.target.value;updatePortfolioProgress(e.target.value);saveDB()};
+  document.getElementById("t-tradeBreak").value=rec.breakNote||"";document.getElementById("t-tradeFix").value=rec.fixNote||"";
+  document.getElementById("t-tradeJournal").value=rec.journal[dk]?.note||"";}
+function updatePortfolioProgress(val){const pp=document.getElementById("t-portfolioProgress");
+  if(!val){pp.textContent="";return;}const target=550000,start=300000;
+  const pct=Math.round(((val-start)/(target-start))*100);const left=target-val;
+  pp.textContent=`${pct}% สู่เป้า · เหลืออีก ${Number(left).toLocaleString()} บาท`;
+  pp.style.color=val>=target?"var(--gold)":"var(--green)";}
+document.getElementById("t-tradeBreak").oninput=e=>{const wk=weekKey(tDate.value);DB.trade[wk]=DB.trade[wk]||{minScores:{},breakNote:"",fixNote:"",journal:{}};DB.trade[wk].breakNote=e.target.value;saveDB()};
+document.getElementById("t-tradeFix").oninput=e=>{const wk=weekKey(tDate.value);DB.trade[wk]=DB.trade[wk]||{minScores:{},breakNote:"",fixNote:"",journal:{}};DB.trade[wk].fixNote=e.target.value;saveDB()};
+document.getElementById("t-tradeJournal").oninput=e=>{const wk=weekKey(tDate.value),dk=tDate.value;
+  DB.trade[wk]=DB.trade[wk]||{minScores:{},breakNote:"",fixNote:"",journal:{}};
+  DB.trade[wk].journal=DB.trade[wk].journal||{};DB.trade[wk].journal[dk]=DB.trade[wk].journal[dk]||{};
+  DB.trade[wk].journal[dk].note=e.target.value;saveDB()};
+async function saveTrade(){saveDB();flash("t-tradeSaved");await exportMarkdown();}
+
+function renderPlaybook(){const c=document.getElementById("t-playbook");c.innerHTML="";
+  PRINCIPLES.forEach(p=>{DB.playbook[p.n]=DB.playbook[p.n]||{};const ans=DB.playbook[p.n];
+    const d=document.createElement("details");d.className="principle";
+    const qHtml=p.q.map((x,i)=>`<div class="q">${x}</div><textarea class="ans" data-p="${p.n}" data-i="${i}" placeholder="พิมพ์คำตอบ…">${esc(ans[i]||"")}</textarea>`).join("");
+    d.innerHTML=`<summary><span class="no">${p.n}</span> ${p.th} <span class="en">${p.en}</span></summary>
+      <div class="body"><div class="qlabel">❓ คำถามสะท้อนตัวเอง</div>${qHtml}
+        <div class="slabel">✅ ขั้นตอนลงมือ</div><ul>${p.s.map(x=>`<li>${x}</li>`).join("")}</ul>
+        <div class="row-actions"><span class="saved" id="pbS_${p.n}">✓ บันทึกแล้ว</span></div></div>`;
+    c.appendChild(d);});
+  const mHead=document.createElement("div");
+  mHead.innerHTML=`<div style="margin:18px 0 10px;padding:12px 16px;background:rgba(84,192,138,.08);border:1px solid rgba(84,192,138,.25);border-radius:12px"><div style="color:var(--green);font-weight:700;font-size:16px">📊 Minervini — 6 กฎเทรด</div></div>`;
+  c.appendChild(mHead);
+  MINERVINI.forEach(p=>{DB.playbook["min_"+p.n]=DB.playbook["min_"+p.n]||{};const ans=DB.playbook["min_"+p.n];
+    const d=document.createElement("details");d.className="principle";d.style.borderColor="rgba(84,192,138,.3)";
+    const qHtml=p.q.map((x,i)=>`<div class="q" style="border-left-color:var(--green)">${x}</div><textarea class="ans" data-p="min_${p.n}" data-i="${i}" placeholder="พิมพ์คำตอบ…">${esc(ans[i]||"")}</textarea>`).join("");
+    d.innerHTML=`<summary><span class="no" style="background:var(--green)">${p.n}</span> ${p.th}</summary>
+      <div class="body"><div class="qlabel" style="color:var(--green)">❓ คำถามสะท้อนตัวเอง</div>${qHtml}
+        <div class="slabel">✅ ขั้นตอนลงมือ</div><ul>${p.s.map(x=>`<li>${x}</li>`).join("")}</ul>
+        <div class="row-actions"><span class="saved" id="pbS_min_${p.n}">✓ บันทึกแล้ว</span></div></div>`;
+    c.appendChild(d);});
+  c.querySelectorAll("textarea.ans").forEach(t=>{t.oninput=e=>{
+    const pn=e.target.dataset.p,qi=e.target.dataset.i;
+    DB.playbook[pn]=DB.playbook[pn]||{};DB.playbook[pn][qi]=e.target.value;saveDB();
+    const s=document.getElementById("pbS_"+pn);if(s){s.classList.add("show");clearTimeout(s._t);s._t=setTimeout(()=>s.classList.remove("show"),1200);}};});}
+
+function renderProgress(){
+  document.getElementById("t-stStreak").textContent=currentStreak();
+  document.getElementById("t-stBest").textContent=bestStreak();
+  document.getElementById("t-stDays").textContent=Object.keys(DB.daily).filter(k=>dayComplete(DB.daily[k])).length;
+  const wks=Object.keys(DB.weekly).sort();
+  const avgs=wks.map(w=>{const sc=DB.weekly[w].scores||{};const vals=Object.values(sc).filter(v=>v>0);
+    return{w,a:vals.length?vals.reduce((x,y)=>x+y,0)/vals.length:0}}).filter(o=>o.a>0);
+  document.getElementById("t-stWeekAvg").textContent=avgs.length?avgs[avgs.length-1].a.toFixed(1):"–";
+  const bars=document.getElementById("t-weekBars");bars.innerHTML="";
+  const show=avgs.slice(-10);if(!show.length){bars.innerHTML='<div style="color:var(--muted);font-size:13px">ยังไม่มีข้อมูล</div>';}
+  show.forEach(o=>{const bar=document.createElement("div");bar.className="bar";bar.style.height=(o.a/5*100)+"%";
+    bar.innerHTML=`<span>${o.a.toFixed(1)}</span><small>${o.w.slice(-3)}</small>`;bars.appendChild(bar);});
+  const radar=document.getElementById("t-radar");radar.innerHTML="";
+  const last=wks.filter(w=>{const s=DB.weekly[w].scores||{};return Object.values(s).some(v=>v>0)}).pop();
+  if(!last){radar.innerHTML='<div style="color:var(--muted);font-size:13px">ยังไม่มีคะแนน</div>';}
+  else{const sc=DB.weekly[last].scores||{};PRINCIPLES.forEach(p=>{const v=sc[p.n]||0;const row=document.createElement("div");row.className="hbar";
+    row.innerHTML=`<div class="hn">${p.n}. ${p.th}</div><div class="htrack"><div class="hfill" style="width:${v/5*100}%;background:linear-gradient(90deg,var(--gold),var(--gold2))"></div></div><div class="hv">${v||"–"}</div>`;radar.appendChild(row);});}
+  const heat=document.getElementById("t-heat");heat.innerHTML="";
+  for(let i=59;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const rec=DB.daily[todayStr(d)];let lvl=0;
+    if(rec){const m=rec.m||{},e=rec.e||{};let c=0;for(let j=0;j<MORNING.length;j++)if(m[j])c++;for(let j=0;j<EVENING.length;j++)if(e[j])c++;lvl=c===0?0:c<=2?1:c<=5?2:3;}
+    const cell=document.createElement("div");cell.className="d"+(lvl?" l"+lvl:"");cell.title=todayStr(d);heat.appendChild(cell);}}
+
+const GH_TOKEN="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";
+const GH_REPO="Chuu007/wind-diary";
+async function pushToGitHub(path,content){
+  const encoded=btoa(unescape(encodeURIComponent(content)));let sha=null;
+  try{const r=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`,{headers:{"Authorization":`Bearer ${GH_TOKEN}`,"User-Agent":"tgr-app"}});if(r.ok){const d=await r.json();sha=d.sha;}}catch(e){}
+  const body={message:`tgr update ${todayStr()}`,content:encoded};if(sha)body.sha=sha;
+  const res=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`,{method:"PUT",headers:{"Authorization":`Bearer ${GH_TOKEN}`,"Content-Type":"application/json","User-Agent":"tgr-app"},body:JSON.stringify(body)});return res.ok;}
+async function exportMarkdown(){
+  let md=`# TGR Dashboard — Export สำหรับ Claude\nวันที่ export: ${todayStr()}\n\n`;
+  if(DB.goal)md+=`## 🎯 เป้าหมายหลัก\n${DB.goal}\n\n`;
+  const dailyDates=Object.keys(DB.daily).sort().reverse().slice(0,30);
+  if(dailyDates.length){md+=`## ☀️🌙 พิธีกรรมรายวัน (30 วันล่าสุด)\n\n`;
+    dailyDates.forEach(date=>{const rec=DB.daily[date]||{};const m=rec.m||{},e=rec.e||{};
+      const mD=MORNING.filter((_,i)=>m[i]).length,eD=EVENING.filter((_,i)=>e[i]).length;
+      md+=`**${date}** — เช้า ${mD}/${MORNING.length} | เย็น ${eD}/${EVENING.length}`;if(rec.note)md+=` | ${rec.note}`;md+="\n";});md+="\n";}
+  const weekKs=Object.keys(DB.weekly).sort().reverse().slice(0,8);
+  if(weekKs.length){md+=`## 📊 คะแนน 13 หลักการ\n\n`;
+    weekKs.forEach(wk=>{const rec=DB.weekly[wk]||{};md+=`### สัปดาห์ ${wk}\n`;
+      if(rec.scores)PRINCIPLES.forEach(p=>{const v=rec.scores[p.n];if(v!==undefined)md+=`- ${p.n}. ${p.th}: ${v}/5\n`;});
+      if(rec.win)md+=`- ✅ ชนะ: ${rec.win}\n`;if(rec.fix)md+=`- 🔧 จะปรับ: ${rec.fix}\n`;md+="\n";});}
+  const ghEl=document.getElementById("t-ghStatus");
+  if(ghEl){ghEl.textContent="☁️ กำลังส่ง...";ghEl.style.opacity=1;ghEl.style.color="var(--muted)";}
+  const ok=await pushToGitHub("tgr/tgr.md",md);
+  if(ghEl){ghEl.textContent=ok?"☁️ GitHub ✓":"⚠️ GitHub ✗";ghEl.style.color=ok?"var(--green)":"var(--red)";setTimeout(()=>{ghEl.style.opacity=0;},3000);}
+}
+function exportData(){const blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tgr-backup-"+todayStr()+".json";a.click();}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{DB=JSON.parse(r.result);saveDB();renderDaily();renderWeek();renderProgress();alert("นำเข้าข้อมูลสำเร็จ");}catch(e){alert("ไฟล์ไม่ถูกต้อง")}};r.readAsText(f);}
+
+renderReadCard();renderDaily();renderWeek();renderTrade();renderPlaybook();
+return{saveDaily,saveWeek,saveTrade,exportData,importData};
+})();
+</script>
+</body>
+</html>
