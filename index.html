@@ -541,7 +541,7 @@ details.cfg summary::-webkit-details-marker{display:none}
 
 <script>
 /* ===== SHARED ===== */
-function todayStr(d=new Date()){return d.toISOString().slice(0,10)}
+function todayStr(d=new Date()){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
 function weekKey(dateStr){
   const d=new Date(dateStr+"T00:00:00"),dt=new Date(d);
   dt.setDate(dt.getDate()+4-(dt.getDay()||7));
