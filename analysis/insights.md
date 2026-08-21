@@ -1,4 +1,4 @@
 # 🤖 AI Insights — วิเคราะห์โดย Claude
-อัปเดต: 2026-08-20
+อัปเดต: 2026-08-21
 
 ไม่สามารถวิเคราะห์ได้: {'type': 'authentication_error', 'message': 'x-api-key header is required'}
